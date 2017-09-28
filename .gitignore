@@ -1,0 +1,17 @@
+
+complex/complex.h
+*.db
+.vs/fadeev_a_u/v15/.suo
+*.ipch
+*.filters
+*.log
+*.obj
+*.tlog
+*.idb
+*.pdb
+*.exe
+*.ilk
+fadeev_a_u.sln
+*.sln
+rational/.vs/rational/v15/.suo
+complex/.vs/complex/v15/.suo
