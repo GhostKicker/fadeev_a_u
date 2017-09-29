@@ -1,5 +1,23 @@
 #include "rational.h"
 #include <iostream>
+#include <sstream>
+
+using namespace std;
+bool testParse(const std::string str)
+{
+	using namespace std;
+	istringstream istrm(str);
+	Rational z;
+	istrm >> z;
+	if (istrm.good())
+	{
+		cout << "Read success: " << str << z << endl;
+	}
+	else {
+		cout << "Read error  : " << str << z << endl;
+	}
+	return istrm.good();
+}
 
 int main()
 {
@@ -12,6 +30,9 @@ int main()
 	RationalBasicTest(cout, Rational(1, 2), -2);
 	//cout << "-2 and 1/3" << endl;
 	//RationalBasicTest(cout, -2, Rational(1, 3));
+	testParse("3/ 5");
+	testParse("-3 :5");
+	testParse("-3 / 2");
 	cout << "Input first rational number" << endl;
 	cin >> a;
 	cout << a << endl;
@@ -28,3 +49,4 @@ int main()
 	cin >> d;
 	return 0;
 }
+

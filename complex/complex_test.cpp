@@ -32,6 +32,7 @@ int main()
 	testParse("{8.9,9 }");
 	testParse("{8.9, 9}");
 	testParse("{ 8.9,9}");
+	testParse("{ 8.9,9");
 	int j(0);
 	cin >> j;
 	return 0;

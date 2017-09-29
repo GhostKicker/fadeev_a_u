@@ -73,13 +73,14 @@ std::istream& Rational::readFrom(std::istream& istrm)
 	istrm >> numerator >> line >> denumerator;
 	if (istrm.good())
 	{
-		if ((Rational::slash == line) && (denumerator > 0))
+		if (((Rational::doubledot == line)||(Rational::slash == line)) && (denumerator > 0))
 		{
 			num = numerator;
 			denum = denumerator;
 			*this = Rational(num, denum);
 		}
-		else {
+		else 
+		{
 			istrm.setstate(std::ios_base::failbit);
 		}
 	}

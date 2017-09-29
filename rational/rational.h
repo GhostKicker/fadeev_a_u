@@ -37,6 +37,7 @@ struct Rational
 	std::ostream& writeTo(std::ostream& ostrm) const;
 	std::istream& readFrom(std::istream& istrm);
 	static const char slash{ '/' };
+	static const char doubledot{ ':' };
 };
 
 void normalizeRationals(Rational& a, Rational& b);
@@ -61,8 +62,8 @@ std::ostream& operator<<(std::ostream& ostrm, const Rational& rhs);
 std::istream& operator>>(std::istream& istrm, Rational& rhs);
 
 void RationalBasicTest(std::ostream& ostrm, const Rational& lhs, const Rational& rhs);
-void RationalBasicTest(std::ostream& ostrm, const int& lhs, const Rational& rhs);
 void RationalBasicTest(std::ostream& ostrm, const Rational& lhs, const int& rhs);
+
 
 #endif // !COMPLEX_H
 
