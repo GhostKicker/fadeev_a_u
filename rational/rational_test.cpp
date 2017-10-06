@@ -24,10 +24,12 @@ int main()
 	using namespace std;
 	Rational a;
 	Rational b;
+	Rational c(3, 5);
 	cout << "1/2 and 1/3" << endl;
 	RationalBasicTest(cout, Rational(1, 2), Rational(1, 3));
 	cout << "1/2 and -2" << endl;
 	RationalBasicTest(cout, Rational(1, 2), -2);
+	cout << "-1 * " << c  << " = " << -c << endl;
 	//cout << "-2 and 1/3" << endl;
 	//RationalBasicTest(cout, -2, Rational(1, 3));
 	testParse("3/ 5");
@@ -42,7 +44,7 @@ int main()
 	Rational aa(a);
 	Rational bb(b);
 	cout << "nonnormalized a and b : " << aa << "  " << bb << endl;
-	aa.normalizeRationals(bb);
+	aa.normalizeWith(bb);
 	cout << "normalized a and b    : " << aa << "  " << bb << endl;
 	RationalBasicTest(cout, a, b);
 	int d;

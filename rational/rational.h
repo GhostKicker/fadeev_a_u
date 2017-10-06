@@ -11,7 +11,11 @@ private:
 
 public:
 	Rational() {}
-	Rational(Rational& rat) = default;
+	Rational(const Rational& rat) 
+		:num (rat.num)
+		,denum (rat.denum)
+	{
+	};
 	~Rational() = default;
 
 	explicit Rational(const int num);
@@ -37,15 +41,13 @@ public:
 	Rational& operator/=(const Rational& lhs);
 	Rational& operator/=(const int lhs);
 
-	void normalizeRationals(Rational& b);
+	void normalizeWith(Rational& b);
 
-	Rational& operator-() { return Rational(-num, denum); }
 
 	std::ostream& writeTo(std::ostream& ostrm) const;
 	std::istream& readFrom(std::istream& istrm);
 };
 
-void normalizeRationals(Rational& a, Rational& b);
 
 Rational operator+ (const Rational& lhs, const  Rational& rhs);
 Rational operator- (const Rational& lhs, const Rational& rhs);
@@ -61,6 +63,8 @@ Rational operator+ (const int& lhs, const  Rational& rhs);
 Rational operator- (const int& lhs, const Rational& rhs);
 Rational operator* (const int& lhs, const Rational& rhs);
 Rational operator/ (const int& lhs, const Rational& rhs);
+
+Rational operator-(const Rational& rhs);
 
 std::ostream& operator<<(std::ostream& ostrm, const Rational& rhs);
 
