@@ -1,9 +1,18 @@
 #ifndef RATIONAL_H
 #define RATIONAL_H
 #include <iosfwd>
-struct Rational
+class Rational
 {
+private:
+	static const char slash{ '/' };
+	static const char doubledot{ ':' };
+	int num{ 0 };
+	int denum{ -1 };
+
+public:
 	Rational() {}
+	Rational(Rational& rat) = default;
+	~Rational() = default;
 
 	explicit Rational(const int num);
 	Rational(const int num, const int denum);
@@ -28,16 +37,12 @@ struct Rational
 	Rational& operator/=(const Rational& lhs);
 	Rational& operator/=(const int lhs);
 
+	void normalizeRationals(Rational& b);
 
 	Rational& operator-() { return Rational(-num, denum); }
 
-	int num{ 0 };
-	int denum{ -1 };
-
 	std::ostream& writeTo(std::ostream& ostrm) const;
 	std::istream& readFrom(std::istream& istrm);
-	static const char slash{ '/' };
-	static const char doubledot{ ':' };
 };
 
 void normalizeRationals(Rational& a, Rational& b);

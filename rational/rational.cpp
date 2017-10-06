@@ -87,13 +87,13 @@ std::istream& Rational::readFrom(std::istream& istrm)
 	return istrm;
 }
 
-void normalizeRationals(Rational& a, Rational& b)
+void Rational::normalizeRationals(Rational& b)
 {
-	int denume = LCD(a.denum, b.denum);
-	int anum = a.num * (denume / a.denum);
-	int bnum = b.num * (denume / b.denum);
-	a.num = anum; a.denum = denume;
-	b.num = bnum; b.denum = denume;
+	int denumee = LCD(denum, b.denum);
+	int anum = num * (denumee / denum);
+	int bnum = b.num * (denumee / b.denum);
+	num = anum; denum = denumee;
+	b.num = bnum; b.denum = denumee;
 }
 
 
@@ -102,7 +102,7 @@ bool Rational::operator==(const Rational& rhs)
 {
 	Rational a(num, denum);
 	Rational b(rhs);
-	normalizeRationals(a, b);
+	a.normalizeRationals(b);
 	return ((a.num == b.num) && (a.denum == b.denum));
 }
 bool Rational::operator==(const int& rhs)
@@ -115,7 +115,7 @@ bool Rational::operator!=(const int& rhs) { return operator!=(Rational(rhs)); }
 Rational& Rational::operator+=(const Rational& rhs)
 {
 	Rational rhss(rhs);
-	normalizeRationals(*this, rhss);
+	normalizeRationals(rhss);
 	num = num + rhss.num;
 	*this = Rational(num, denum);
 	return *this;
@@ -123,7 +123,7 @@ Rational& Rational::operator+=(const Rational& rhs)
 Rational& Rational::operator-=(const Rational& rhs)
 {
 	Rational rhss(rhs);
-	normalizeRationals(*this, rhss);
+	normalizeRationals(rhss);
 	num = num - rhss.num;
 	*this = Rational(num, denum);
 	return *this;
@@ -182,7 +182,7 @@ bool Rational::operator<(const Rational& rhs)
 {
 	Rational a(num, denum);
 	Rational b(rhs);
-	normalizeRationals(a, b);
+	a.normalizeRationals(b);
 	return (a.num < b.num);
 }
 
@@ -190,7 +190,7 @@ bool Rational::operator>(const Rational& rhs)
 {
 	Rational a(num, denum);
 	Rational b(rhs);
-	normalizeRationals(a, b);
+	a.normalizeRationals(b);
 	return (a.num > b.num);
 }
 

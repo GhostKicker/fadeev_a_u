@@ -42,7 +42,7 @@ int main()
 	Rational aa(a);
 	Rational bb(b);
 	cout << "nonnormalized a and b : " << aa << "  " << bb << endl;
-	normalizeRationals(aa, bb);
+	aa.normalizeRationals(bb);
 	cout << "normalized a and b    : " << aa << "  " << bb << endl;
 	RationalBasicTest(cout, a, b);
 	int d;
