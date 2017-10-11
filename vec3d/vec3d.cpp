@@ -93,22 +93,27 @@ std::ostream& operator<<(std::ostream& ostrm, const Vec3d& rhs) {
 
 double eps = 0.00001;
 bool Vec3d::operator==(const Vec3d& rhs) {
-	bool a = true;
-	!(abs(x - rhs.x) < eps) ? a = false : a = a;
-	!(abs(y - rhs.y) < eps) ? a = false : a = a;
-	!(abs(z - rhs.z) < eps) ? a = false : a = a;
-	return a;
+	if (
+		(abs(x - rhs.x) < eps) &&
+		(abs(y - rhs.y) < eps) &&
+		(abs(z - rhs.z) < eps)
+		) 
+	{
+		return true;
+	}
+	else 
+	{
+		return false;
+	}
+
 }
 
 bool  Vec3d::operator!=(const Vec3d& rhs) {
-	return (operator==(rhs));
+	return (!operator==(rhs));
 }
 
 Vec3d operator-(const Vec3d& rhs) {
-	double x = -rhs.x;
-	double y = -rhs.y;
-	double z = -rhs.z;
-	return Vec3d(x, y, z);
+	return Vec3d(-rhs.x, -rhs.y, -rhs.z);
 }
 
 Vec3d operator*(const Vec3d& lhs, const double& rhs) {
@@ -127,19 +132,10 @@ Vec3d operator*(const double& lhs, const Vec3d& rhs) {
 	return b.operator*=(a);
 }
 double Vec3d::length() const {
-	double res(0);
-	res += x * x;
-	res += y * y;
-	res += z * z;
-	res = sqrt(res);
-	return res;
+	return sqrt(x*x + y*y + z*z);
 }
 double dotProduct(const Vec3d& lhs, const Vec3d& rhs) {
-	double res = 0;
-	res += lhs.x * rhs.x;
-	res += lhs.y * rhs.y;
-	res += lhs.z * rhs.z;
-	return res;
+	return (lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z);
 }
 Vec3d crossProduct(const Vec3d& lhs, const Vec3d& rhs) {
 	double x = lhs.y * rhs.z - lhs.z * rhs.y;

@@ -11,8 +11,10 @@ complex/complex.h
 *.pdb
 *.exe
 *.ilk
+*.vcxproj
 fadeev_a_u.sln
 *.sln
 rational/.vs/rational/v15/.suo
 complex/.vs/complex/v15/.suo
 *.opendb
+vec3d/.vs/vec3d/v15/.suo

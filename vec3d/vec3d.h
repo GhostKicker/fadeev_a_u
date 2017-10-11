@@ -3,15 +3,6 @@
 #include <iosfwd>
 
 struct Vec3d {
-public:
-
-	double x = 0.0;
-	double y = 0.0;
-	double z = 0.0;
-
-	static const char leftBrace = '{';
-	static const char rightBrace = '}';
-	static const char dotcomma = ';';
 
 public:
 	std::istream& Vec3d::readFrom(std::istream& istrm);
@@ -41,6 +32,16 @@ public:
 	Vec3d(const Vec3d& v) = default;
 	Vec3d() = default;
 	~Vec3d() = default;
+
+public:
+
+	double x = 0.0;
+	double y = 0.0;
+	double z = 0.0;
+
+	static const char leftBrace = '{';
+	static const char rightBrace = '}';
+	static const char dotcomma = ';';
 
 };
 
