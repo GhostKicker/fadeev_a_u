@@ -5,43 +5,43 @@
 struct Vec3d {
 
 public:
-	std::istream& Vec3d::readFrom(std::istream& istrm);
-	std::ostream& Vec3d::writeTo(std::ostream& istrm) const;
+    std::istream& Vec3d::readFrom(std::istream& istrm);
+    std::ostream& Vec3d::writeTo(std::ostream& istrm) const;
 
-	Vec3d& operator+=(const Vec3d& rhs);
-	Vec3d& operator-=(const Vec3d& rhs);
+    Vec3d& operator+=(const Vec3d& rhs);
+    Vec3d& operator-=(const Vec3d& rhs);
 
-	Vec3d& operator*=(const double& rhs);
-	Vec3d& operator/=(const double& rhs);
+    Vec3d& operator*=(const double& rhs);
+    Vec3d& operator/=(const double& rhs);
 
-	bool operator==(const Vec3d& rhs);
-	bool operator!=(const Vec3d& rhs);
+    bool operator==(const Vec3d& rhs);
+    bool operator!=(const Vec3d& rhs);
 
-	Vec3d& operator=(const Vec3d& rhs);
+    Vec3d& operator=(const Vec3d& rhs);
 
 
-	double length() const;
+    double length() const;
 
-	Vec3d(const double xin, const double yin, const double zin)
-		: x(xin)
-		, y(yin)
-		, z(zin)
-	{
-	}
+    Vec3d(const double xin, const double yin, const double zin)
+        : x(xin)
+        , y(yin)
+        , z(zin)
+    {
+    }
 
-	Vec3d(const Vec3d& v) = default;
-	Vec3d() = default;
-	~Vec3d() = default;
+    Vec3d(const Vec3d& v) = default;
+    Vec3d() = default;
+    ~Vec3d() = default;
 
 public:
 
-	double x = 0.0;
-	double y = 0.0;
-	double z = 0.0;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
 
-	static const char leftBrace = '{';
-	static const char rightBrace = '}';
-	static const char dotcomma = ';';
+    static const char leftBrace = '{';
+    static const char rightBrace = '}';
+    static const char dotcomma = ';';
 
 };
 
