@@ -6,7 +6,7 @@ struct Vec3d {
 
 public:
     std::istream& Vec3d::readFrom(std::istream& istrm);
-    std::ostream& Vec3d::writeTo(std::ostream& istrm) const;
+    std::ostream& Vec3d::writeTo(std::ostream& ostrm) const;
 
     Vec3d& operator+=(const Vec3d& rhs);
     Vec3d& operator-=(const Vec3d& rhs);
