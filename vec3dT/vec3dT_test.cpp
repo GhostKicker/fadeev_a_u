@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include "vec3dT.h"
 using namespace std;
 
@@ -6,20 +7,34 @@ template<typename T>
 void VOUT(Vec3dT<T>& lhs);
 
 template <typename T>
-void VoperVOUT(Vec3dT<T>& lhs, string oper, Vec3dT<T>& rhs);
+void VoperOUT(Vec3dT<T>& lhs, const string oper, Vec3dT<T>& rhs);
 
 int main() {
-    Vec3dT<double> v (2.3, 3.4, 4.5);
-    Vec3dT<double> v1(1.0, 2.0, 3.0);
+    Vec3dT<string> v4 ("a","b","c");
+    Vec3dT<string> v3("b","a","c");
+    Vec3dT<double> v(2.1, 2.2, 2.3);
+    Vec3dT<double> v1(2.10000001, 2.2, 2.3);
     Vec3dT<double> v2();
-    VoperVOUT(v, "+", v1);
-    VOUT(v1 + v);
-    //v = v + v1;
-    v += v1;
-    v = v - v1;
-    v -= v1;
-    bool a = (v == v1);
-    bool b = (v != v1);
+    VoperOUT(v, "+", v1);
+    VOUT(v1 + v); 
+    cout << endl;
+    VoperOUT(v, "-", v1);
+    VOUT(v1 - v);
+    cout << endl;
+    VoperOUT(v, "==", v1);
+    cout << (v == v1);
+    cout << endl;
+    VoperOUT(v, "!=", v1);
+    cout << (v != v1);
+    cout << endl;
+    VoperOUT(v3, "==", v4);
+    cout << (v3 == v4);
+    cout << endl;
+    VoperOUT(v3, "!=", v4);
+    cout << (v3 != v4);
+    cout << endl;
+
+    int a;
     cin >> a;
 	return 0;
 }
@@ -30,7 +45,7 @@ void VOUT(Vec3dT<T>& lhs) {
 }
 
 template <typename T>
-void VoperVOUT(Vec3dT<T>& lhs, string oper, Vec3dT<T>& rhs) {
+void VoperOUT(Vec3dT<T>& lhs, const string oper, Vec3dT<T>& rhs) {
     VOUT(lhs);
     cout << " " << oper << " ";
     VOUT(rhs);
