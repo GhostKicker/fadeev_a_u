@@ -22,6 +22,8 @@ bool testParse(const std::string str)
 int main()
 {
 	using namespace std;
+    Rational smth;
+    smth.~Rational();
 	Rational a;
 	Rational b;
 	Rational c(3, 5);
