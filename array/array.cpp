@@ -79,7 +79,7 @@ void Array::resize(const ptrdiff_t& newCap) {
     this->swapWith(tmp);
 };
 
-Array& Array::insert(ptrdiff_t i, int data) {
+void Array::insert(ptrdiff_t i, int data) {
     if (i < 0) {
         throw (invalid_argument("You cannot simply insert into element with negative index!"));
     }
@@ -95,9 +95,10 @@ Array& Array::insert(ptrdiff_t i, int data) {
         *(pData_ + index) = *(pData_ + index - 1);
     }
     *(pData_ + i) = data;
+    //return *this;
 }
 
-Array& Array::erase(ptrdiff_t i) {
+void Array::erase(ptrdiff_t i) {
     if (logicSize_ == 0) {
         throw (length_error("You cannot erase from empty array!"));
     }
@@ -113,17 +114,18 @@ Array& Array::erase(ptrdiff_t i) {
     }
     logicSize_--;
     if (logicSize_ == 0) { pData_ = nullptr; }
+    //return *this;
 }
 
-Array& Array::push_back(const int num) {
+void Array::push_back(const int num) {
     if (logicSize_ == physSize_) { this->resize(physSize_ + 1); }
     logicSize_++;
     this->insert(logicSize_ - 1, num);
     if (logicSize_ == physSize_) { this->resize(physSize_ - 1); }
-    return *this;
+    //return *this;
 }
 
-Array& Array::pop_back() {
+void Array::pop_back() {
     this->erase(logicSize_ - 1);
-    return *this;
+    //return *this;
 }

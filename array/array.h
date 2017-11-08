@@ -17,10 +17,10 @@ public:
 
     ptrdiff_t& size();
     ptrdiff_t& capacity();
-    Array& insert(ptrdiff_t i, int data);
-    Array& erase(ptrdiff_t i);
-    Array& push_back(const int num);
-    Array& pop_back();
+    void insert(ptrdiff_t i, int data);
+    void erase(ptrdiff_t i);
+    void push_back(const int num);
+    void pop_back();
     int& operator[](const ptrdiff_t i);
     const int& operator[](const ptrdiff_t i) const;
 
