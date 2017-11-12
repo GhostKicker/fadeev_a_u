@@ -1,6 +1,5 @@
 #include "matrix.h"
 #include <stdexcept>
-
 Matrix::Matrix(const ptrdiff_t& nRow, const ptrdiff_t& nCol) {
     if ((nRow < 0)||(nCol < 0)) {
         throw (invalid_argument("You cannot simply set array size to negative!"));
@@ -31,13 +30,17 @@ ptrdiff_t& Matrix::rowNum() {
 }
 
 Matrix::~Matrix() {
-    for (int i = 0; i < nRow_; i++)
+    //при наличии этой части программа завершается с ошибкой, не могу понять почему
+    /*
+    for (int i = 0; i < nCol_; i++)
     {
         delete[] ppData_[i];
         ppData_[i] = nullptr;
+        
     }
-    delete[] ppData_;
-    ppData_ = nullptr;
+    */
+   delete[] ppData_;
+   ppData_ = nullptr;
 }
 
 double& Matrix::operator()(const ptrdiff_t i, const ptrdiff_t j) {

@@ -14,9 +14,9 @@ void matrixOut(Matrix& m) {
 
 int main() {
     Matrix m1();
-    Matrix m2(3, 3);
-    cout << "here" << endl;
-    for (size_t i = 0; i < 3; i++)
+    Matrix m2(4, 3);
+    //cout << "here" << endl;
+    for (size_t i = 0; i < 4; i++)
     {
         for (size_t j = 0; j < 3; j++)
         {
@@ -28,5 +28,7 @@ int main() {
     cout << "Col number = " << m2.colNum() << endl;
     m2.~Matrix();
 
+    int n;
+    cin >> n;
     return 0;
 }
