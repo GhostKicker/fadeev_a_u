@@ -118,7 +118,5 @@ int main() {
     }
     m2.~Matrix();
 
-    int n;
-    cin >> n;
     return 0;
 }
