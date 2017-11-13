@@ -10,7 +10,7 @@ Matrix::Matrix(const ptrdiff_t& nRow, const ptrdiff_t& nCol) {
     length_ = nCol * nRow;
     if ((nRow_ != 0) && (nCol_ != 0)) {
         ppData_ = (new double*[nRow_]);
-        for (int i = 0; i < nRow_; i++)
+        for (ptrdiff_t i = 0; i < nRow_; i++)
         {
             ppData_[i] = (new double[nCol_]);
         }
@@ -61,4 +61,65 @@ const double& Matrix::operator()(const ptrdiff_t i, const ptrdiff_t j) const {
         throw (out_of_range("Index is out of range!"));
     }
     return *(*(ppData_ + i) + j);
+}
+
+Matrix::Matrix(const Matrix& m) 
+    :nRow_ (m.nRow_)
+    ,nCol_ (m.nCol_)
+    ,length_ (m.length_)
+{
+    ppData_ = new double*[nRow_];
+    for (ptrdiff_t i = 0; i < nRow_; i++)
+    {
+        ppData_[i] = new double[nCol_];
+    }
+    for (ptrdiff_t i = 0; i < nRow_; i++)
+    {
+        for (ptrdiff_t j = 0; j < nCol_; j++)
+        {
+            *(*(ppData_ + i) + j) = *(*(m.ppData_ + i) + j);
+        }
+    }
+}
+
+void Matrix::swapWith(Matrix& m) {
+    swap(nRow_, m.nRow_);
+    swap(nCol_, m.nCol_);
+    swap(length_, m.length_);
+    swap(ppData_, m.ppData_);
+}
+
+Matrix& Matrix::operator=(const Matrix& obj) {
+    if (this != &obj) {
+        this->swapWith(Matrix(obj));
+    }
+    return *this;
+}
+
+Matrix& Matrix::operator+=(const Matrix& m) {
+    if ((nCol_ != m.nCol_) || (nRow_ != m.nRow_)) {
+        throw (invalid_argument("You can't plus matrixes with different sizes!"));
+    }
+    for (ptrdiff_t i = 0; i < nRow_; i++)
+    {
+        for (ptrdiff_t j = 0; j < nCol_; j++)
+        {
+            *(*(ppData_ + i) + j) += *(*(m.ppData_ + i) + j);
+        }
+    }
+    return *this;
+}
+
+Matrix& Matrix::operator-=(const Matrix& m) {
+    if ((nCol_ != m.nCol_) || (nRow_ != m.nRow_)) {
+        throw (invalid_argument("You can't plus matrixes with different sizes!"));
+    }
+    for (ptrdiff_t i = 0; i < nRow_; i++)
+    {
+        for (ptrdiff_t j = 0; j < nCol_; j++)
+        {
+            *(*(ppData_ + i) + j) -= *(*(m.ppData_ + i) + j);
+        }
+    }
+    return *this;
 }
