@@ -19,15 +19,17 @@ public:
 
     double& operator()(const ptrdiff_t i, const ptrdiff_t j);
     const double& operator()(const ptrdiff_t i, const ptrdiff_t j) const;
+    bool operator==(const Matrix& rhs);
+    bool operator!=(const Matrix& rhs);
     Matrix& operator=(const Matrix& obj);
     Matrix& operator+=(const Matrix& m);
     Matrix& operator-=(const Matrix& m);
     Matrix& operator*=(const Matrix& m);
     Matrix& operator*=(const double& rhs);
 
-    long long& determinator();
-    Matrix& pow(const Matrix& m, long long& power);
-    Matrix& inverse();
+    //double& determinator();
+    //Matrix& pow(const Matrix& m, long long& power);
+    //Matrix& inverse();
 
 private:
 
@@ -38,10 +40,10 @@ private:
     ptrdiff_t length_{ 0 };
 };
 
-Matrix& operator+(const Matrix& lhs, const Matrix& rhs);
-Matrix& operator-(const Matrix& lhs, const Matrix& rhs);
-Matrix& operator*(const Matrix& lhs, const Matrix& rhs);
-Matrix& operator*(const Matrix& lhs, const double& rhs);
-Matrix& operator*(const double& lhs, const Matrix& rhs);
+Matrix operator+(const Matrix& lhs, const Matrix& rhs);
+Matrix operator-(const Matrix& lhs, const Matrix& rhs);
+Matrix operator*(const Matrix& lhs, const Matrix& rhs);
+Matrix operator*(const Matrix& lhs, const double& rhs);
+Matrix operator*(const double& lhs, const Matrix& rhs);
 
 #endif // !MATRIX_H

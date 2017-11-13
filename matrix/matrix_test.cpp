@@ -19,7 +19,7 @@ void matrixIn(Matrix& m) {
     {
         for (ptrdiff_t j = 0; j < m.colNum(); j++)
         {
-            m(i, j) = m.rowNum()*i + j;
+            m(i, j) = m.colNum()*i + j;
         }
     }
 
@@ -34,7 +34,11 @@ int main() {
     matrixIn(m2);
     matrixIn(m6);
     matrixIn(m7);
-    //cout << "here" << endl;
+    Matrix m6x(m6);
+    matrixOut(m6);
+    cout << endl << endl;
+    matrixOut(m7);
+    cout << endl << endl;
     cout << "---------m2---------" << endl;
     matrixOut(m2);
     cout << "-------m3(m2)-------" << endl;
@@ -65,7 +69,53 @@ int main() {
     catch (invalid_argument e) {
         cout << "I tried to deduct matrixes with different sizes but I couldn't" << endl;
     }
-
+    cout << "--------m9*=5-------" << endl;
+    Matrix m9(m2);
+    m9 *= 5;
+    matrixOut(m9);
+    cout << "-------m2+m2-------" << endl;
+    matrixOut(m2 + m2);
+    cout << "-------m6+m4-------" << endl;
+    try {
+        Matrix m13(m6 + m4);
+    }
+    catch (invalid_argument e) {
+        cout << "I tried to summ matrixes with different sizes but I couldn't" << endl;
+    }
+    cout << "-------m2-m2-------" << endl;
+    matrixOut(m2 - m2);
+    cout << "-------m6-m4-------" << endl;
+    try {
+        Matrix m13(m6 - m4);
+    }
+    catch (invalid_argument e) {
+        cout << "I tried to deduct matrixes with different sizes but I couldn't" << endl;
+    }
+    cout << "-------m2==m2-------" << endl;
+    cout << ((m2 == m2) ? "true" : "false") << endl;
+    cout << "-------m4==m2-------" << endl;
+    cout << ((m4 == m2) ? "true" : "false") << endl;
+    cout << "-------m4!=m2-------" << endl;
+    cout << ((m4 != m2) ? "true" : "false") << endl;
+    cout << "-------m6x*=m7-------" << endl;
+    m6x *= m7;
+    matrixOut(m6x);
+    cout << "-------m6*=m6-------" << endl;
+    try {
+        m6 *= m6;
+    }
+    catch (invalid_argument e) {
+        cout << "I tried to multiply two unmultiplyeble matrixes but I couldn't!" << endl;
+    }
+    cout << "-------m6*m7-------" << endl;
+    matrixOut(m6*m7);
+    cout << "-------m6*m6-------" << endl;
+    try {
+        matrixOut(m6 * m6);
+    }
+    catch (invalid_argument e) {
+        cout << "I tried to multiply two unmultiplyeble matrixes but I couldn't!" << endl;
+    }
     m2.~Matrix();
 
     int n;
