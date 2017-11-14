@@ -116,7 +116,5 @@ int main() {
     catch (invalid_argument e) {
         cout << "I tried to multiply two unmultiplyeble matrixes but I couldn't!" << endl;
     }
-    m2.~Matrix();
-
-    return 0;
+     return 0;
 }
