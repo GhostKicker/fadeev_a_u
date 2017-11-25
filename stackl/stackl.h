@@ -12,6 +12,7 @@ public:
 
     StackL& operator=(const StackL& rhs);
 
+    void clear();
     void push(const int& data);
     void pop();
     int& top();

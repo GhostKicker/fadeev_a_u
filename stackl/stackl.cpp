@@ -31,6 +31,12 @@ StackL::~StackL() {
     }
 }
 
+void StackL::clear() {
+    while (!isEmpty()) {
+        pop();
+    }
+}
+
 StackL::StackL(const StackL& st) {
     pHead_ = nullptr;
     if (!st.isEmpty()) {
