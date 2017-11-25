@@ -37,7 +37,7 @@ void StackL::clear() {
     }
 }
 
-StackL::StackL(const StackL& st) {
+StackL::StackL(const StackL& st) { //wrong, will be rewritten
     pHead_ = nullptr;
     if (!st.isEmpty()) {
         pHead_ = new Node(nullptr, st.pHead_->data_);
