@@ -1,7 +1,26 @@
-#include "priorityqueue.h"
+#include "priorityqueuel.h"
 #include <iostream>
 using namespace std;
 
+void out_all(const PriorityQueueL& qu) {
+    PriorityQueueL copy = qu;
+    cout << "full queue now: ";
+    while (!copy.isEmpty()) {
+        cout << copy.top() << " ";
+        copy.pop();
+    }
+    cout << endl;
+}
+
+void pushandout(PriorityQueueL& qu, const int& n) {
+    qu.push(n);
+    out_all(qu);
+}
+
+void popandout(PriorityQueueL& qu) {
+    qu.pop();
+    out_all(qu);
+}
 
 int main() {
     PriorityQueueL qu;
@@ -11,12 +30,37 @@ int main() {
     catch (runtime_error e) {
         cout << "I tried to get top from empty Queue but I couldn't" << endl;
     }
-    qu.push(2);
-    cout << qu.top() << endl;
-    qu.push(3);
-    cout << qu.top() << endl;
-    qu.push(1);
-    cout << qu.top() << endl;
+
+    pushandout(qu, 2);
+    cout << "top now: " << qu.top() << endl;
+    pushandout(qu, 3);
+    pushandout(qu, 10);
+    cout << "top now: " << qu.top() << endl;
+    pushandout(qu, 4);
+    pushandout(qu, 1);
+    pushandout(qu, 5);
+    popandout(qu);
+    popandout(qu);
+    cout << "--------" << endl;
+    PriorityQueueL qu2 = qu;
+    PriorityQueueL qu3;
+    PriorityQueueL qu4;
+    qu4.push(666);
+    out_all(qu2);
+    qu2 = qu3;
+    pushandout(qu2, 999);
+
+    qu2 = qu4;
+    out_all(qu2);
+
+    qu2 = qu;
+    out_all(qu2);
+
+    qu2 = qu4;
+    out_all(qu2);
+
+
+
 
     int qweqweqwe;
     cin >> qweqweqwe;

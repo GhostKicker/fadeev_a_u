@@ -9,6 +9,7 @@ public:
 
     PriorityQueueL& operator=(const PriorityQueueL& rhs);
 
+    void clear();
     void push(const int& data);
     void pop();
     const int& top() const;
@@ -28,7 +29,8 @@ private:
 
     };
     Node* pHead_ = nullptr;
-    Node* pTail_ = nullptr;
+    //Node* pTail_ = nullptr;
+    //pTail_ в очереди с приоритетом оказался не нужен от слова совсем
 };
 
 
