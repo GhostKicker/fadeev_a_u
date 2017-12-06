@@ -25,3 +25,5 @@ matrix/.vs/matrix/v15/.suo
 matrix/Debug/.vs/matrix/v15/.suo
 stackl/.vs/stackl/v15/.suo
 priorityqueuel/.vs/priorityqueuel/v15/.suo
+*.iobj
+*.ipdb

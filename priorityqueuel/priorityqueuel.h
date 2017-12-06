@@ -29,8 +29,6 @@ private:
 
     };
     Node* pHead_ = nullptr;
-    //Node* pTail_ = nullptr;
-    //pTail_ в очереди с приоритетом оказался не нужен от слова совсем
 };
 
 
