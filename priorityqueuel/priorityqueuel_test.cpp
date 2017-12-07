@@ -59,7 +59,9 @@ int main() {
     qu2 = qu4;
     out_all(qu2);
 
-
+    cout << "qu2 is empty? : " << (qu2.isEmpty() ? "true" : "false") << endl;
+    qu2.clear();
+    cout << "qu2 is empty? : " << (qu2.isEmpty() ? "true" : "false") << endl;
 
 
     int qweqweqwe;
