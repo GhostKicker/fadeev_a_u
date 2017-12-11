@@ -65,6 +65,6 @@ int main() {
     cout << "current phys size: " << st1.capacity() << endl;
 
 
-    int qweqweqwe;
-    cin >> qweqweqwe;
+    //int qweqweqwe;
+    //cin >> qweqweqwe;
 }
