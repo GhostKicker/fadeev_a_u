@@ -64,6 +64,6 @@ int main() {
     cout << "qu2 is empty? : " << (qu2.isEmpty() ? "true" : "false") << endl;
 
 
-    int qweqweqwe;
-    cin >> qweqweqwe;
+    //int qweqweqwe;
+    //cin >> qweqweqwe;
 }
