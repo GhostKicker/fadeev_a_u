@@ -21,7 +21,7 @@ Array::Array(const Array& arr)
     :physSize_ (arr.physSize_)
     ,logicSize_(arr.logicSize_)
 {
-    pData_ = new int[logicSize_];
+    pData_ = new int[physSize_];
     for (int i = 0; i < logicSize_; i++)
     {
         *(pData_ + i) = *(arr.pData_ + i);
