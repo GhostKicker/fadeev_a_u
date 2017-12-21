@@ -18,9 +18,9 @@ public:
     void push(const int& v);
     void pop();
     void clear();
-    bool isEmpty() const;
+    const bool isEmpty() const;
 
-    void resize(ptrdiff_t& size);
+    void resize(const ptrdiff_t& size);
 
 private:
 
@@ -29,7 +29,6 @@ private:
     ptrdiff_t capacity = 0;
     ptrdiff_t indexHead = 0;
     ptrdiff_t indexTail = 0;
-
 };
 
 
