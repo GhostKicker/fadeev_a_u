@@ -7,19 +7,24 @@ Array::~Array(){
     pData_ = nullptr;
 }
 
-Array::Array(const int& sz) {
+Array::Array(const int& sz) 
+{
     if (sz < 0) {
         throw (invalid_argument("You cannot simply set array size to negative!"));
     }
     physSize_ = sz;
     logicSize_ = sz;
-    if (sz != 0) pData_ = (new int[logicSize_]);
+    if (sz != 0) {
+        pData_ = (new int[logicSize_]);
+    }
+
+
 
 }
 
 Array::Array(const Array& arr)
-    :physSize_ (arr.physSize_)
-    ,logicSize_(arr.logicSize_)
+    : physSize_ (arr.physSize_)
+    , logicSize_(arr.logicSize_)
 {
     pData_ = new int[physSize_];
     for (int i = 0; i < logicSize_; i++)
@@ -35,7 +40,8 @@ int& Array::operator[](const ptrdiff_t i) {
     return *(pData_ + i);
 }
 
-const int& Array::operator[](const ptrdiff_t i) const {
+const int& Array::operator[](const ptrdiff_t i) const 
+{
     if (i >= logicSize_) {
         throw (out_of_range("Index is out of range!"));
     }
@@ -43,12 +49,14 @@ const int& Array::operator[](const ptrdiff_t i) const {
 
 };
 
-ptrdiff_t& Array::size() {
+ptrdiff_t Array::size() const
+{
     return this->logicSize_;
 }
 
-ptrdiff_t& Array::capacity() {
-    return this->physSize_;
+ptrdiff_t Array::capacity() const
+{
+    return physSize_;
 }
 
 Array& Array::operator=(const Array& obj) {
@@ -128,4 +136,11 @@ void Array::push_back(const int num) {
 void Array::pop_back() {
     this->erase(logicSize_ - 1);
     //return *this;
+}
+
+Array::Array()
+    :physSize_{ 0 }
+    , logicSize_{ 0 }
+    , pData_{ nullptr }
+{
 }

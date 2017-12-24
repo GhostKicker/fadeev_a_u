@@ -15,6 +15,7 @@ void writeArray(Array& arr, string name) {
 
 int main() {
     Array abc();
+    writeArray(abc, "abc");
     Array b(5);
     b[0] = 1;
     b[1] = 2;
@@ -33,7 +34,6 @@ int main() {
     }
 
     e = c;
-    d.~Array();
 
     try {
         b[5] = 3;

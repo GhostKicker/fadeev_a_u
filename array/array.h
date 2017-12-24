@@ -4,10 +4,11 @@
 #include <cstddef>
 using namespace std;
 
-class Array {
+class Array 
+{
     //erase(i), push_back, pop_back
 public:
-    Array() = default;
+    Array();
     Array(const Array& ar);
     Array(const int& size);
     ~Array();
@@ -15,8 +16,8 @@ public:
     void swapWith(Array& rhs);
     void resize(const ptrdiff_t& newCap);
 
-    ptrdiff_t& size();
-    ptrdiff_t& capacity();
+    ptrdiff_t size() const;
+    ptrdiff_t capacity() const;
     void insert(ptrdiff_t i, int data);
     void erase(ptrdiff_t i);
     void push_back(const int num);
