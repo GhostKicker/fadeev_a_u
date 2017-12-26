@@ -9,14 +9,16 @@
 
 #include "tiny_dnn/tiny_dnn.h"
 
-int number_of_randoms_tests                 = 100;
-int number_of_randoms_train                 = 100;
-int number_of_iterations                    = 15;
-double learning_rate                        = 1;
-int epochs                                  = 1;
-std::string data_path                       = "C://tiny-dnn-master";
-int minibatch_size                          = 16;
-tiny_dnn::core::backend_t backend_type      = tiny_dnn::core::default_engine();
+typedef std::map<tiny_dnn::label_t, std::map<tiny_dnn::label_t, int>> conf_m;
+
+int number_of_randoms_tests = 20;
+int number_of_randoms_train = 20;
+int number_of_iterations = 15;
+double learning_rate = 1;
+int epochs = 1;
+std::string data_path = "C://tiny-dnn-master";
+int minibatch_size = 1;
+tiny_dnn::core::backend_t backend_type = tiny_dnn::core::default_engine();
 
 
 std::vector<tiny_dnn::label_t> train_labels, test_labels;
@@ -39,6 +41,40 @@ void quit();
 
 void waitForCommands();
 
+
+double Precition(const conf_m& m)
+{
+    double totalPrecition = 0;
+    for (int i = 0; i < 9; i++)
+    {
+        int num = m.at(i).at(i);
+        int denum = 0;
+        for (int j = 0; j < 9; j++)
+        {
+            denum += m.at(i).at(j);
+        }
+        if (denum > 0) totalPrecition += (double)(num) / denum;
+        totalPrecition /= 10;
+    }
+    return totalPrecition;
+}
+
+double Recall(const conf_m& m)
+{
+    double totalPrecition = 0;
+    for (int i = 0; i < 9; i++)
+    {
+        int num = m.at(i).at(i);
+        int denum = 0;
+        for (int j = 0; j < 9; j++)
+        {
+            denum += m.at(j).at(i);
+        }
+        if (denum > 0) totalPrecition += (double)(num) / denum;
+        totalPrecition /= 10;
+    }
+    return totalPrecition;
+}
 
 int main() {
     Initialize();
@@ -75,7 +111,7 @@ const std::map<std::string, int> cmdMap
     { "-show", SHOW },
     { "-best", BEST },
     { "-opened", OPENED },
-    { "-quit", QUIT}
+    { "-quit", QUIT }
 };
 static void construct_net(tiny_dnn::network<tiny_dnn::sequential> &nn,
     tiny_dnn::core::backend_t backend_type) {
@@ -127,7 +163,7 @@ static void construct_net(tiny_dnn::network<tiny_dnn::sequential> &nn,
         << tanh();
 }
 
-static void train_net(const std::string &data_dir_path,
+static void train_net(
     double learning_rate,
     const int n_train_epochs,
     const int n_minibatch,
@@ -144,10 +180,10 @@ static void train_net(const std::string &data_dir_path,
     construct_net(nn, backend_type);
     nn.load(net_name);
 
-    std::cout << "start training" << std::endl;
+    //std::cout << "start training" << std::endl;
 
-    tiny_dnn::progress_display disp(train_images.size());
-    tiny_dnn::timer t;
+    //tiny_dnn::progress_display disp(train_images.size());
+    //tiny_dnn::timer t;
 
     optimizer.alpha *=
         std::min(tiny_dnn::float_t(4),
@@ -156,29 +192,31 @@ static void train_net(const std::string &data_dir_path,
     int epoch = 1;
     // create callback
     auto on_enumerate_epoch = [&]() {
-        std::cout << "Epoch " << epoch << "/" << n_train_epochs << " finished. "
-            << t.elapsed() << "s elapsed." << std::endl;
+        //std::cout << "Epoch " << epoch << "/" << n_train_epochs << " finished. "
+        //    << t.elapsed() << "s elapsed." << std::endl;
         ++epoch;
         tiny_dnn::result res = nn.test(test_images, test_labels);
         std::cout << res.num_success << "/" << res.num_total << std::endl;
 
-        disp.restart(train_images.size());
-        t.restart();
+        //disp.restart(train_images.size());
+        //t.restart();
     };
 
-    auto on_enumerate_minibatch = [&]() { disp += n_minibatch; };
+    auto on_enumerate_minibatch = [&]() {/* disp += n_minibatch;*/ };
 
     // training
     nn.train<tiny_dnn::mse>(optimizer, train_images, train_labels, n_minibatch,
         n_train_epochs, on_enumerate_minibatch,
         on_enumerate_epoch);
 
-    std::cout << "end training." << std::endl;
+    //std::cout << "end training." << std::endl;
 
     // test and show results
-    nn.test(test_images, test_labels).print_detail(std::cout);
-    // save network model & trained weights
+    tiny_dnn::result res = nn.test(test_images, test_labels);// .print_detail(std::cout);
+                                      // save network model & trained weights
     nn.save(net_name);
+    double prec = Precition(res.confusion_matrix);
+    double rec = Recall(res.confusion_matrix);
 }
 
 
@@ -186,7 +224,7 @@ void waitForCommands()
 {
     std::string command = "";
     std::cin >> command;
-    if (cmdMap.find(command) != cmdMap.end()) 
+    if (cmdMap.find(command) != cmdMap.end())
     {
         switch (cmdMap.at(command)) {
         case HELP: cmdHelp(); break;
@@ -266,6 +304,7 @@ void create() {
     catch (tiny_dnn::nn_error exc) {
 
         tiny_dnn::network<tiny_dnn::sequential> nn;
+        construct_net(nn, backend_type);
         nn.save(net_name);
         std::cout << "net with name " + net_name + " created successfully!" << std::endl;
 
@@ -275,11 +314,11 @@ void create() {
         std::cout << "net with name " + net_name + " already exists" << std::endl << "create new instead of already existing? (y/n)" << std::endl;
         std::string ans = "";
         std::cin >> ans;
-        if (ans == "y" || ans == "Y") 
+        if (ans == "y" || ans == "Y")
         {
             tiny_dnn::network<tiny_dnn::sequential> nn;
             nn.save(net_name);
-            std::cout << net_name + " has been overwritten";
+            std::cout << net_name + " has been overwritten" << std::endl;
         }
         else {
             std::cout << "nothing changed" << std::endl;
@@ -296,47 +335,50 @@ void close() {
     else std::cout << "there's no opened net with that name" << std::endl;
 }
 
-void start() 
+void start()
 {
-    std::cout << "start testing" << std::endl;
-    for (std::set<std::string>::iterator curnet = nns.begin(); curnet != nns.end(); curnet++)
-    {
-        std::cout << "currently testing " + (*curnet);
-
-        for (int i = 0; i < number_of_iterations; i++)
+    try {
+        std::cout << "start testing" << std::endl;
+        if (nns.begin() == nns.end()) std::cout << "no nets are opened" << std::endl;
+        for (std::set<std::string>::iterator curnet = nns.begin(); curnet != nns.end(); curnet++)
         {
+            std::cout << "currently testing " + (*curnet) << std::endl;
 
-            std::vector<tiny_dnn::label_t> test_labels_r, train_labels_r;
-            std::vector<tiny_dnn::vec_t> test_images_r, train_images_r;
-            for (int cur = 0; cur < number_of_randoms_train; cur++)
+            for (int i = 0; i < number_of_iterations; i++)
             {
-                int randcur = rand() % train_images.size();
-                train_labels_r.push_back(train_labels_r[randcur]);
-                train_images_r.push_back(train_images_r[randcur]);
-            }
-            for (int cur = 0; cur < number_of_randoms_tests; cur++)
-            {
-                int randcur = rand() % test_images.size();
-                test_labels_r.push_back(test_labels_r[randcur]);
-                test_images_r.push_back(test_images_r[randcur]);
-            }
 
-            tiny_dnn::adagrad optimizer;
-            tiny_dnn::progress_display disp(train_images.size());
-            auto on_enumerate_minibatch = [&]() { disp += minibatch_size; };
+                std::vector<tiny_dnn::label_t> test_labels_r, train_labels_r;
+                std::vector<tiny_dnn::vec_t> test_images_r, train_images_r;
+                for (int cur = 0; cur < number_of_randoms_train; cur++)
+                {
+                    int randcur = rand() % train_images.size();
+                    train_labels_r.push_back(train_labels[randcur]);
+                    train_images_r.push_back(train_images[randcur]);
+                }
+                for (int cur = 0; cur < number_of_randoms_tests; cur++)
+                {
+                    int randcur = rand() % test_images.size();
+                    test_labels_r.push_back(test_labels[randcur]);
+                    test_images_r.push_back(test_images[randcur]);
+                }
 
-            optimizer.alpha *=
-                std::min(tiny_dnn::float_t(4),
-                    static_cast<tiny_dnn::float_t>(sqrt(minibatch_size) * learning_rate));
-            try {
-                train_net(data_path, learning_rate, epochs, minibatch_size, backend_type, test_labels_r, test_images_r, train_labels_r, train_images_r, (*curnet));
-            }
-            catch (tiny_dnn::nn_error &err) {
-                std::cerr << "Exception: " << err.what() << std::endl;
+
+                try {
+                    train_net(learning_rate, epochs, minibatch_size, backend_type, train_labels_r, train_images_r, test_labels_r, test_images_r, (*curnet));
+                }
+                catch (tiny_dnn::nn_error &err) {
+                    std::cerr << "Exception: " << err.what() << std::endl;
+                }
             }
         }
+        std::cout << "stop testing" << std::endl;
     }
-    std::cout << "stop testing" << std::endl;
+    catch (std::exception& e) {
+        std::cout << "some error has occured" << std::endl;
+    }
+    catch (tiny_dnn::nn_error& er) {
+        std::cout << "some error has occured" << std::endl;
+    }
 }
 void best()
 {
@@ -346,12 +388,12 @@ void show()
 {
 
 }
-void quit() 
+void quit()
 {
 
 }
 
-void Initialize() 
+void Initialize()
 {
     std::cout << "Initialization started" << std::endl;
 
