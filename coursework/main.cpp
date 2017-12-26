@@ -37,7 +37,6 @@ void close();
 void start();
 void best();
 void show();
-void quit();
 
 void waitForCommands();
 
@@ -47,11 +46,12 @@ double Precition(const conf_m& m)
     double totalPrecition = 0;
     for (int i = 0; i < 9; i++)
     {
-        int num = m.at(i).at(i);
+        int num = 0;
+        if (m.find(i)!= m.end() && m.at(i).find(i) != m.at(i).end()) num = m.at(i).at(i);
         int denum = 0;
         for (int j = 0; j < 9; j++)
         {
-            denum += m.at(i).at(j);
+            if (m.find(i) != m.end() && m.at(i).find(j) != m.at(i).end()) denum += m.at(i).at(j);
         }
         if (denum > 0) totalPrecition += (double)(num) / denum;
         totalPrecition /= 10;
@@ -64,11 +64,12 @@ double Recall(const conf_m& m)
     double totalPrecition = 0;
     for (int i = 0; i < 9; i++)
     {
-        int num = m.at(i).at(i);
+        int num = 0;
+        if (m.find(i) != m.end() && m.at(i).find(i) != m.at(i).end()) num = m.at(i).at(i);
         int denum = 0;
         for (int j = 0; j < 9; j++)
         {
-            denum += m.at(j).at(i);
+            if (m.find(j) != m.end() && m.at(j).find(i) != m.at(j).end())   denum += m.at(j).at(i);
         }
         if (denum > 0) totalPrecition += (double)(num) / denum;
         totalPrecition /= 10;
@@ -98,7 +99,6 @@ const enum cmds
     SHOW,
     BEST,
     OPENED,//
-    QUIT
 };
 
 const std::map<std::string, int> cmdMap
@@ -111,7 +111,6 @@ const std::map<std::string, int> cmdMap
     { "-show", SHOW },
     { "-best", BEST },
     { "-opened", OPENED },
-    { "-quit", QUIT }
 };
 static void construct_net(tiny_dnn::network<tiny_dnn::sequential> &nn,
     tiny_dnn::core::backend_t backend_type) {
@@ -198,8 +197,6 @@ static void train_net(
         tiny_dnn::result res = nn.test(test_images, test_labels);
         std::cout << res.num_success << "/" << res.num_total << std::endl;
 
-        //disp.restart(train_images.size());
-        //t.restart();
     };
 
     auto on_enumerate_minibatch = [&]() {/* disp += n_minibatch;*/ };
@@ -212,11 +209,13 @@ static void train_net(
     //std::cout << "end training." << std::endl;
 
     // test and show results
-    tiny_dnn::result res = nn.test(test_images, test_labels);// .print_detail(std::cout);
+    tiny_dnn::result res = nn.test(test_images, test_labels);
+    res.print_detail(std::cout);
                                       // save network model & trained weights
     nn.save(net_name);
     double prec = Precition(res.confusion_matrix);
     double rec = Recall(res.confusion_matrix);
+    std::cout << prec << " " << rec << std::endl;
 }
 
 
@@ -235,7 +234,6 @@ void waitForCommands()
         case START: start(); break;
         case SHOW: show(); break;
         case BEST: best(); break;
-        case QUIT: quit(); break;
         }
     }
     else {
@@ -306,6 +304,7 @@ void create() {
         tiny_dnn::network<tiny_dnn::sequential> nn;
         construct_net(nn, backend_type);
         nn.save(net_name);
+
         std::cout << "net with name " + net_name + " created successfully!" << std::endl;
 
     }
@@ -385,10 +384,6 @@ void best()
 
 }
 void show()
-{
-
-}
-void quit()
 {
 
 }
