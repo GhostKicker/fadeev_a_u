@@ -5,13 +5,13 @@
 #include <map> 
 #include <vector>
 #include <fstream>
+#include <algorithm>
 
 #include "tiny_dnn/tiny_dnn.h"
 
-std::istringstream stre;
-
-int number_of_randoms                       = 100;
-int number_of_iterations                    = 10;
+int number_of_randoms_tests                 = 100;
+int number_of_randoms_train                 = 100;
+int number_of_iterations                    = 15;
 double learning_rate                        = 1;
 int epochs                                  = 1;
 std::string data_path                       = "C://tiny-dnn-master";
@@ -19,10 +19,12 @@ int minibatch_size                          = 16;
 tiny_dnn::core::backend_t backend_type      = tiny_dnn::core::default_engine();
 
 
-std::vector<tiny_dnn::label_t> train_labels;
-std::vector<tiny_dnn::vec_t> train_images;
+std::vector<tiny_dnn::label_t> train_labels, test_labels;
+std::vector<tiny_dnn::vec_t> train_images, test_images;
 
 std::set<std::string> nns;
+
+void Initialize();
 
 //COMMANDS
 void cmdHelp();
@@ -39,7 +41,7 @@ void waitForCommands();
 
 
 int main() {
-
+    Initialize();
     std::cout << "input '-help' for commands list" << std::endl;
 
 
@@ -75,70 +77,6 @@ const std::map<std::string, int> cmdMap
     { "-opened", OPENED },
     { "-quit", QUIT}
 };
-
-static void train(const std::string &data_dir_path,
-    double learning_rate,
-    const int n_train_epochs,
-    const int n_minibatch,
-    tiny_dnn::core::backend_t backend_type) {
-    // specify loss-function and learning strategy
-    tiny_dnn::network<tiny_dnn::sequential> nn;
-    tiny_dnn::adagrad optimizer;
-
-    construct_net(nn, backend_type);
-
-    std::cout << "load models..." << std::endl;
-
-    // load MNIST dataset
-    std::vector<tiny_dnn::label_t> train_labels, test_labels;
-    std::vector<tiny_dnn::vec_t> train_images, test_images;
-
-    tiny_dnn::parse_mnist_labels(data_dir_path + "/train-labels.idx1-ubyte",
-        &train_labels);
-    tiny_dnn::parse_mnist_images(data_dir_path + "/train-images.idx3-ubyte",
-        &train_images, -1.0, 1.0, 2, 2);
-    tiny_dnn::parse_mnist_labels(data_dir_path + "/t10k-labels.idx1-ubyte",
-        &test_labels);
-    tiny_dnn::parse_mnist_images(data_dir_path + "/t10k-images.idx3-ubyte",
-        &test_images, -1.0, 1.0, 2, 2);
-
-    std::cout << "start training" << std::endl;
-
-    tiny_dnn::progress_display disp(train_images.size());
-    tiny_dnn::timer t;
-
-    optimizer.alpha *=
-        std::min(tiny_dnn::float_t(4),
-            static_cast<tiny_dnn::float_t>(sqrt(n_minibatch) * learning_rate));
-
-    int epoch = 1;
-    // create callback
-    auto on_enumerate_epoch = [&]() {
-        std::cout << "Epoch " << epoch << "/" << n_train_epochs << " finished. "
-            << t.elapsed() << "s elapsed." << std::endl;
-        ++epoch;
-        tiny_dnn::result res = nn.test(test_images, test_labels);
-        std::cout << res.num_success << "/" << res.num_total << std::endl;
-
-        disp.restart(train_images.size());
-        t.restart();
-    };
-
-    auto on_enumerate_minibatch = [&]() { disp += n_minibatch; };
-
-    // training
-    nn.train<tiny_dnn::mse>(optimizer, train_images, train_labels, n_minibatch,
-        n_train_epochs, on_enumerate_minibatch,
-        on_enumerate_epoch);
-
-    std::cout << "end training." << std::endl;
-
-    // test and show results
-    nn.test(test_images, test_labels).print_detail(std::cout);
-    // save network model & trained weights
-    nn.save("LeNet-model");
-}
-
 static void construct_net(tiny_dnn::network<tiny_dnn::sequential> &nn,
     tiny_dnn::core::backend_t backend_type) {
     // connection table [Y.Lecun, 1998 Table.1]
@@ -189,6 +127,61 @@ static void construct_net(tiny_dnn::network<tiny_dnn::sequential> &nn,
         << tanh();
 }
 
+static void train_net(const std::string &data_dir_path,
+    double learning_rate,
+    const int n_train_epochs,
+    const int n_minibatch,
+    tiny_dnn::core::backend_t backend_type,
+    std::vector<tiny_dnn::label_t>& train_labels,
+    std::vector<tiny_dnn::vec_t>& train_images,
+    std::vector<tiny_dnn::label_t>& test_labels,
+    std::vector<tiny_dnn::vec_t>& test_images,
+    std::string net_name) {
+    // specify loss-function and learning strategy
+    tiny_dnn::network<tiny_dnn::sequential> nn;
+    tiny_dnn::adagrad optimizer;
+
+    construct_net(nn, backend_type);
+    nn.load(net_name);
+
+    std::cout << "start training" << std::endl;
+
+    tiny_dnn::progress_display disp(train_images.size());
+    tiny_dnn::timer t;
+
+    optimizer.alpha *=
+        std::min(tiny_dnn::float_t(4),
+            static_cast<tiny_dnn::float_t>(sqrt(n_minibatch) * learning_rate));
+
+    int epoch = 1;
+    // create callback
+    auto on_enumerate_epoch = [&]() {
+        std::cout << "Epoch " << epoch << "/" << n_train_epochs << " finished. "
+            << t.elapsed() << "s elapsed." << std::endl;
+        ++epoch;
+        tiny_dnn::result res = nn.test(test_images, test_labels);
+        std::cout << res.num_success << "/" << res.num_total << std::endl;
+
+        disp.restart(train_images.size());
+        t.restart();
+    };
+
+    auto on_enumerate_minibatch = [&]() { disp += n_minibatch; };
+
+    // training
+    nn.train<tiny_dnn::mse>(optimizer, train_images, train_labels, n_minibatch,
+        n_train_epochs, on_enumerate_minibatch,
+        on_enumerate_epoch);
+
+    std::cout << "end training." << std::endl;
+
+    // test and show results
+    nn.test(test_images, test_labels).print_detail(std::cout);
+    // save network model & trained weights
+    nn.save(net_name);
+}
+
+
 void waitForCommands()
 {
     std::string command = "";
@@ -208,7 +201,7 @@ void waitForCommands()
         }
     }
     else {
-        std::cout << "connamd not found. try -help for list" << std::endl;
+        std::cout << "command not found. try -help for list" << std::endl;
     }
 }
 
@@ -255,6 +248,7 @@ void opened()
     {
         std::cout << (*it) << std::endl;
     }
+    if (nns.begin() == nns.end()) std::cout << "List is empty! Nothing is opened!" << std::endl;
 }
 
 void create() {
@@ -304,30 +298,45 @@ void close() {
 
 void start() 
 {
-    if (train_labels.size() == 0 || train_images.size() == 0) 
-    {
-        tiny_dnn::parse_mnist_labels(data_path + "/train-labels.idx1-ubyte",
-            &train_labels);
-        tiny_dnn::parse_mnist_images(data_path + "/train-images.idx3-ubyte",
-            &train_images, -1.0, 1.0, 2, 2);
-    }
+    std::cout << "start testing" << std::endl;
     for (std::set<std::string>::iterator curnet = nns.begin(); curnet != nns.end(); curnet++)
     {
-        tiny_dnn::network<tiny_dnn::sequential> nn;
-        nn.load(*curnet);
+        std::cout << "currently testing " + (*curnet);
 
-        for (int iter = 0; iter < number_of_iterations; iter++)
+        for (int i = 0; i < number_of_iterations; i++)
         {
-            std::vector<tiny_dnn::label_t> tested_labels;
-            std::vector<tiny_dnn::vec_t> tested_images;
-            for (int cur = 0; cur < number_of_randoms; cur++)
+
+            std::vector<tiny_dnn::label_t> test_labels_r, train_labels_r;
+            std::vector<tiny_dnn::vec_t> test_images_r, train_images_r;
+            for (int cur = 0; cur < number_of_randoms_train; cur++)
             {
                 int randcur = rand() % train_images.size();
-                tested_labels.push_back(train_labels[randcur]);
-                tested_images.push_back(train_images[randcur]);
+                train_labels_r.push_back(train_labels_r[randcur]);
+                train_images_r.push_back(train_images_r[randcur]);
+            }
+            for (int cur = 0; cur < number_of_randoms_tests; cur++)
+            {
+                int randcur = rand() % test_images.size();
+                test_labels_r.push_back(test_labels_r[randcur]);
+                test_images_r.push_back(test_images_r[randcur]);
+            }
+
+            tiny_dnn::adagrad optimizer;
+            tiny_dnn::progress_display disp(train_images.size());
+            auto on_enumerate_minibatch = [&]() { disp += minibatch_size; };
+
+            optimizer.alpha *=
+                std::min(tiny_dnn::float_t(4),
+                    static_cast<tiny_dnn::float_t>(sqrt(minibatch_size) * learning_rate));
+            try {
+                train_net(data_path, learning_rate, epochs, minibatch_size, backend_type, test_labels_r, test_images_r, train_labels_r, train_images_r, (*curnet));
+            }
+            catch (tiny_dnn::nn_error &err) {
+                std::cerr << "Exception: " << err.what() << std::endl;
             }
         }
     }
+    std::cout << "stop testing" << std::endl;
 }
 void best()
 {
@@ -339,5 +348,26 @@ void show()
 }
 void quit() 
 {
+
+}
+
+void Initialize() 
+{
+    std::cout << "Initialization started" << std::endl;
+
+    std::cout << "Loading train labels" << std::endl;
+    tiny_dnn::parse_mnist_labels(data_path + "/train-labels.idx1-ubyte",
+        &train_labels);
+    std::cout << "Loading train images" << std::endl;
+    tiny_dnn::parse_mnist_images(data_path + "/train-images.idx3-ubyte",
+        &train_images, -1.0, 1.0, 2, 2);
+    std::cout << "Loading test labels" << std::endl;
+    tiny_dnn::parse_mnist_labels(data_path + "/t10k-labels.idx1-ubyte",
+        &test_labels);
+    std::cout << "Loading test images" << std::endl;
+    tiny_dnn::parse_mnist_images(data_path + "/t10k-images.idx3-ubyte",
+        &test_images, -1.0, 1.0, 2, 2);
+
+    std::cout << "Initialization ended. Enjoy!" << std::endl;
 
 }

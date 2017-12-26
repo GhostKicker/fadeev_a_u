@@ -15,7 +15,7 @@ void writeArray(Array& arr, string name) {
 
 int main() {
     Array abc();
-    writeArray(abc, "abc");
+    //writeArray(abc, "abc");
     Array b(5);
     b[0] = 1;
     b[1] = 2;

@@ -33,7 +33,8 @@ Array::Array(const Array& arr)
     }
 }
 
-int& Array::operator[](const ptrdiff_t i) {
+int& Array::operator[](const ptrdiff_t i) 
+{
     if (i >= logicSize_) {
         throw (out_of_range ("Index is out of range!"));
     }
@@ -59,21 +60,24 @@ ptrdiff_t Array::capacity() const
     return physSize_;
 }
 
-Array& Array::operator=(const Array& obj) {
+Array& Array::operator=(const Array& obj)
+{
     if (this != &obj) {
         this->swapWith(Array(obj));
     }
     return *this;
 }
 
-void Array::swapWith(Array& rhs) {
+void Array::swapWith(Array& rhs) 
+{
     swap(physSize_, rhs.physSize_);
     swap(logicSize_, rhs.logicSize_);
     swap(pData_, rhs.pData_);
 }
 
 
-void Array::resize(const ptrdiff_t& newCap) {
+void Array::resize(const ptrdiff_t& newCap) 
+{
     if (newCap < 0) {
         throw (invalid_argument("You cannot simply set new array capacity to negative!"));
     }
@@ -87,14 +91,15 @@ void Array::resize(const ptrdiff_t& newCap) {
     this->swapWith(tmp);
 };
 
-void Array::insert(ptrdiff_t i, int data) {
+void Array::insert(ptrdiff_t i, int data) 
+{
     if (i < 0) {
         throw (invalid_argument("You cannot simply insert into element with negative index!"));
     }
     if (i >= logicSize_) {
         throw (out_of_range("You cannot simply insert into element with index that is more than array size!"));
     }
-    if (logicSize_ = physSize_) {
+    if (logicSize_ == physSize_) {
         this->resize(physSize_ + 1);
     }
     logicSize_++;
@@ -106,7 +111,8 @@ void Array::insert(ptrdiff_t i, int data) {
     //return *this;
 }
 
-void Array::erase(ptrdiff_t i) {
+void Array::erase(ptrdiff_t i) 
+{
     if (logicSize_ == 0) {
         throw (length_error("You cannot erase from empty array!"));
     }
@@ -125,7 +131,8 @@ void Array::erase(ptrdiff_t i) {
     //return *this;
 }
 
-void Array::push_back(const int num) {
+void Array::push_back(const int num) 
+{
     if (logicSize_ == physSize_) { this->resize(physSize_ + 1); }
     logicSize_++;
     this->insert(logicSize_ - 1, num);
@@ -133,7 +140,8 @@ void Array::push_back(const int num) {
     //return *this;
 }
 
-void Array::pop_back() {
+void Array::pop_back() 
+{
     this->erase(logicSize_ - 1);
     //return *this;
 }
