@@ -1,4 +1,6 @@
 #define _SCL_SECURE_NO_WARNINGS
+
+
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -54,14 +56,14 @@ double Precition(const conf_m& m)
             if (m.find(i) != m.end() && m.at(i).find(j) != m.at(i).end()) denum += m.at(i).at(j);
         }
         if (denum > 0) totalPrecition += (double)(num) / denum;
-        totalPrecition /= 10;
+        totalPrecition;
     }
-    return totalPrecition;
+    return totalPrecition / 10;
 }
 
 double Recall(const conf_m& m)
 {
-    double totalPrecition = 0;
+    double totalRecall = 0;
     for (int i = 0; i < 9; i++)
     {
         int num = 0;
@@ -71,10 +73,10 @@ double Recall(const conf_m& m)
         {
             if (m.find(j) != m.end() && m.at(j).find(i) != m.at(j).end())   denum += m.at(j).at(i);
         }
-        if (denum > 0) totalPrecition += (double)(num) / denum;
-        totalPrecition /= 10;
+        if (denum > 0) totalRecall += (double)(num) / denum;
+        totalRecall;
     }
-    return totalPrecition;
+    return totalRecall / 10;
 }
 
 int main() {
@@ -112,6 +114,7 @@ const std::map<std::string, int> cmdMap
     { "-best", BEST },
     { "-opened", OPENED },
 };
+
 static void construct_net(tiny_dnn::network<tiny_dnn::sequential> &nn,
     tiny_dnn::core::backend_t backend_type) {
     // connection table [Y.Lecun, 1998 Table.1]
@@ -171,51 +174,41 @@ static void train_net(
     std::vector<tiny_dnn::vec_t>& train_images,
     std::vector<tiny_dnn::label_t>& test_labels,
     std::vector<tiny_dnn::vec_t>& test_images,
-    std::string net_name) {
-    // specify loss-function and learning strategy
+    std::string net_name,
+    std::ofstream& ofstr) {
     tiny_dnn::network<tiny_dnn::sequential> nn;
     tiny_dnn::adagrad optimizer;
 
     construct_net(nn, backend_type);
     nn.load(net_name);
 
-    //std::cout << "start training" << std::endl;
-
-    //tiny_dnn::progress_display disp(train_images.size());
-    //tiny_dnn::timer t;
-
     optimizer.alpha *=
         std::min(tiny_dnn::float_t(4),
             static_cast<tiny_dnn::float_t>(sqrt(n_minibatch) * learning_rate));
 
     int epoch = 1;
-    // create callback
     auto on_enumerate_epoch = [&]() {
-        //std::cout << "Epoch " << epoch << "/" << n_train_epochs << " finished. "
-        //    << t.elapsed() << "s elapsed." << std::endl;
         ++epoch;
         tiny_dnn::result res = nn.test(test_images, test_labels);
         std::cout << res.num_success << "/" << res.num_total << std::endl;
 
     };
 
-    auto on_enumerate_minibatch = [&]() {/* disp += n_minibatch;*/ };
+    auto on_enumerate_minibatch = [&]() {};
 
     // training
     nn.train<tiny_dnn::mse>(optimizer, train_images, train_labels, n_minibatch,
         n_train_epochs, on_enumerate_minibatch,
         on_enumerate_epoch);
 
-    //std::cout << "end training." << std::endl;
 
-    // test and show results
     tiny_dnn::result res = nn.test(test_images, test_labels);
-    res.print_detail(std::cout);
-                                      // save network model & trained weights
+    //res.print_detail(std::cout);
+
     nn.save(net_name);
     double prec = Precition(res.confusion_matrix);
     double rec = Recall(res.confusion_matrix);
-    std::cout << prec << " " << rec << std::endl;
+    ofstr << prec << " " << rec << std::endl;
 }
 
 
@@ -304,7 +297,7 @@ void create() {
         tiny_dnn::network<tiny_dnn::sequential> nn;
         construct_net(nn, backend_type);
         nn.save(net_name);
-
+        std::ofstream((net_name + "_t.txt").c_str());
         std::cout << "net with name " + net_name + " created successfully!" << std::endl;
 
     }
@@ -317,7 +310,11 @@ void create() {
         {
             tiny_dnn::network<tiny_dnn::sequential> nn;
             nn.save(net_name);
-            std::cout << net_name + " has been overwritten" << std::endl;
+            std::cout << net_name + " has been overwritten" << std::endl; 
+
+            std::ofstream ofs;
+            ofs.open((net_name + "_t.txt").c_str(), std::ofstream::out | std::ofstream::trunc);
+            ofs.close();
         }
         else {
             std::cout << "nothing changed" << std::endl;
@@ -343,6 +340,8 @@ void start()
         {
             std::cout << "currently testing " + (*curnet) << std::endl;
 
+            std::ofstream ofs(((*curnet) + "_t.txt").c_str());
+
             for (int i = 0; i < number_of_iterations; i++)
             {
 
@@ -363,12 +362,13 @@ void start()
 
 
                 try {
-                    train_net(learning_rate, epochs, minibatch_size, backend_type, train_labels_r, train_images_r, test_labels_r, test_images_r, (*curnet));
+                    train_net(learning_rate, epochs, minibatch_size, backend_type, train_labels_r, train_images_r, test_labels_r, test_images_r, (*curnet), ofs);
                 }
                 catch (tiny_dnn::nn_error &err) {
                     std::cerr << "Exception: " << err.what() << std::endl;
                 }
             }
+            ofs.close();
         }
         std::cout << "stop testing" << std::endl;
     }
@@ -379,13 +379,18 @@ void start()
         std::cout << "some error has occured" << std::endl;
     }
 }
+
 void best()
 {
 
 }
+
 void show()
 {
+    for (auto it = nns.begin(); it != nns.end(); it++)
+    {
 
+    }
 }
 
 void Initialize()
