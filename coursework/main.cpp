@@ -1,6 +1,5 @@
 #define _SCL_SECURE_NO_WARNINGS
 
-
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -8,112 +7,138 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
 
 #include "tiny_dnn/tiny_dnn.h"
 
 typedef std::map<tiny_dnn::label_t, std::map<tiny_dnn::label_t, int>> conf_m;
 
-int number_of_randoms_tests = 20;
-int number_of_randoms_train = 20;
-int number_of_iterations = 15;
-double learning_rate = 1;
-int epochs = 1;
-std::string data_path = "C://tiny-dnn-master";
-int minibatch_size = 1;
-tiny_dnn::core::backend_t backend_type = tiny_dnn::core::default_engine();
+using namespace std;
+using namespace tiny_dnn;
 
+int number_of_dots                                                   = 0;
+string root_path                                                     = "";
+string path_to_models                                                = "";
+string path_to_data                                                  = "";
+string path_to_databases                                             = "";
+int number_of_tested                                                 = 0;
 
-std::vector<tiny_dnn::label_t> train_labels, test_labels;
-std::vector<tiny_dnn::vec_t> train_images, test_images;
+tiny_dnn::core::backend_t backend_type                               = tiny_dnn::core::default_engine();
 
+std::vector<tiny_dnn::label_t> test_labels;
+std::vector<tiny_dnn::vec_t> test_images;
 std::set<std::string> nns;
 
-void Initialize();
-
-//COMMANDS
-void cmdHelp();
-void open();
-void opened();
-void create();
-void close();
-void start();
-void best();
-void show();
-
-void waitForCommands();
+static void construct_net(tiny_dnn::network<tiny_dnn::sequential> &nn,
+    tiny_dnn::core::backend_t backend_type);
 
 
-double Precition(const conf_m& m)
+string find_file_name(string& full_path)
+{
+    string res = "";
+    ptrdiff_t index = full_path.size();
+    --index;
+    while (index >= 0 && full_path[index] != '\\')
+    {
+        res = full_path[index] + res;
+        --index;
+    }
+    return res;
+}
+
+
+bool stream_is_empty(std::stringstream& pFile)
+{
+    return pFile.peek() == std::ifstream::traits_type::eof();
+}
+
+double Precision_i(const conf_m& m, int i)
+{
+    int num = 0;
+    if (m.find(i) != m.end() && m.at(i).find(i) != m.at(i).end()) num = m.at(i).at(i);
+    int denum = 0;
+    for (int j = 0; j < 9; j++)
+    {
+        if (m.find(i) != m.end() && m.at(i).find(j) != m.at(i).end() && i != j) denum += m.at(i).at(j);
+    }
+    if (denum > 0) return (double)(num) / denum; else return 0;
+}
+
+double Recall_i(const conf_m& m, int i)
+{
+    int num = 0;
+    if (m.find(i) != m.end() && m.at(i).find(i) != m.at(i).end()) num = m.at(i).at(i);
+    int denum = 0;
+    for (int j = 0; j < 9; j++)
+    {
+        if (m.find(j) != m.end() && m.at(j).find(i) != m.at(j).end() && i != j)   denum += m.at(j).at(i);
+    }
+    if (denum > 0) return (double)(num) / denum; else return 0;
+}
+
+double Precision(const conf_m& m)
 {
     double totalPrecition = 0;
-    for (int i = 0; i < 9; i++)
-    {
-        int num = 0;
-        if (m.find(i)!= m.end() && m.at(i).find(i) != m.at(i).end()) num = m.at(i).at(i);
-        int denum = 0;
-        for (int j = 0; j < 9; j++)
-        {
-            if (m.find(i) != m.end() && m.at(i).find(j) != m.at(i).end()) denum += m.at(i).at(j);
-        }
-        if (denum > 0) totalPrecition += (double)(num) / denum;
-        totalPrecition;
-    }
+    for (int i = 0; i < 9; i++) totalPrecition += Precision_i(m, i);
     return totalPrecition / 10;
 }
 
 double Recall(const conf_m& m)
 {
     double totalRecall = 0;
-    for (int i = 0; i < 9; i++)
-    {
-        int num = 0;
-        if (m.find(i) != m.end() && m.at(i).find(i) != m.at(i).end()) num = m.at(i).at(i);
-        int denum = 0;
-        for (int j = 0; j < 9; j++)
-        {
-            if (m.find(j) != m.end() && m.at(j).find(i) != m.at(j).end())   denum += m.at(j).at(i);
-        }
-        if (denum > 0) totalRecall += (double)(num) / denum;
-        totalRecall;
-    }
+    for (int i = 0; i < 9; i++) totalRecall += Recall_i(m, i);
+    
     return totalRecall / 10;
 }
 
-int main() {
-    Initialize();
-    std::cout << "input '-help' for commands list" << std::endl;
-
-
-    while (1) {
-        std::cout << "----------------------" << std::endl;
-        waitForCommands();
-    }
-    return 0;
+double F1_i(const conf_m& m, int i)
+{
+    return 2 * (Precision_i(m, i)*Recall_i(m, i)) / (Precision_i(m, i) + Recall_i(m, i));
+}
+double F1(const conf_m& m)
+{
+    return 2 * (Precision(m)*Recall(m)) / (Precision(m) + Recall(m));
 }
 
-const enum cmds
+void fill_massives()
 {
-    HELP,//
-    CREATE,//
-    OPEN,//
-    CLOSE,
-    START,
-    SHOW,
-    BEST,
-    OPENED,//
-};
+    std::cout << "loading databases" << std::endl;
 
-const std::map<std::string, int> cmdMap
-{
-    { "-help", HELP },
-    { "-create", CREATE },
-    { "-open", OPEN },
-    { "-close", CLOSE },
-    { "-start", START },
-    { "-show", SHOW },
-    { "-best", BEST },
-    { "-opened", OPENED },
-};
+    std::cout << "Loading test labels" << std::endl;
+    tiny_dnn::parse_mnist_labels(root_path + path_to_databases + "/t10k-labels.idx1-ubyte",
+        &test_labels);
+    std::cout << "Loading test images" << std::endl;
+    tiny_dnn::parse_mnist_images(root_path + path_to_databases + "/t10k-images.idx3-ubyte",
+        &test_images, -1.0, 1.0, 2, 2);
+
+    std::cout << "loading done!" << std::endl;
+
+}
+
+
+static void testing(
+    tiny_dnn::core::backend_t backend_type,
+    std::vector<tiny_dnn::label_t>& test_labels,
+    std::vector<tiny_dnn::vec_t>& test_images,
+    std::string net_name,
+    std::ofstream& ofstr) {
+    tiny_dnn::network<tiny_dnn::sequential> nn;
+
+    construct_net(nn, backend_type);
+    nn.load(path_to_models + net_name);
+
+
+    tiny_dnn::result res = nn.test(test_images, test_labels);
+
+    double prec = Precision(res.confusion_matrix);
+    double rec = Recall(res.confusion_matrix);
+    double f1 = F1(res.confusion_matrix);
+    ofstr << (double)res.num_success / res.num_total << "\t" << prec << "\t" << rec << "\t" << f1 << endl;
+    std::cout << res.num_success << "/" << res.num_total << "     " << prec << "       " << rec << "       " << f1 << std::endl;
+}
+
 
 static void construct_net(tiny_dnn::network<tiny_dnn::sequential> &nn,
     tiny_dnn::core::backend_t backend_type) {
@@ -165,174 +190,111 @@ static void construct_net(tiny_dnn::network<tiny_dnn::sequential> &nn,
         << tanh();
 }
 
-static void train_net(
-    double learning_rate,
-    const int n_train_epochs,
-    const int n_minibatch,
-    tiny_dnn::core::backend_t backend_type,
-    std::vector<tiny_dnn::label_t>& train_labels,
-    std::vector<tiny_dnn::vec_t>& train_images,
-    std::vector<tiny_dnn::label_t>& test_labels,
-    std::vector<tiny_dnn::vec_t>& test_images,
-    std::string net_name,
-    std::ofstream& ofstr) {
-    tiny_dnn::network<tiny_dnn::sequential> nn;
-    tiny_dnn::adagrad optimizer;
+const enum cmds
+{
+    START,
+    BEST,
+};
 
-    construct_net(nn, backend_type);
-    nn.load(net_name);
+const std::map<std::string, int> cmdMap
+{
+    { "--start", START },
+    { "--best", BEST },
+};
 
-    optimizer.alpha *=
-        std::min(tiny_dnn::float_t(4),
-            static_cast<tiny_dnn::float_t>(sqrt(n_minibatch) * learning_rate));
+void start(int argc, int i, char** argv);
+void best(int argc, int i, char** argv);
 
-    int epoch = 1;
-    auto on_enumerate_epoch = [&]() {
-        ++epoch;
-        tiny_dnn::result res = nn.test(test_images, test_labels);
-        std::cout << res.num_success << "/" << res.num_total << std::endl;
-
-    };
-
-    auto on_enumerate_minibatch = [&]() {};
-
-    // training
-    nn.train<tiny_dnn::mse>(optimizer, train_images, train_labels, n_minibatch,
-        n_train_epochs, on_enumerate_minibatch,
-        on_enumerate_epoch);
-
-
-    tiny_dnn::result res = nn.test(test_images, test_labels);
-    //res.print_detail(std::cout);
-
-    nn.save(net_name);
-    double prec = Precition(res.confusion_matrix);
-    double rec = Recall(res.confusion_matrix);
-    ofstr << prec << " " << rec << std::endl;
+void Initialize() 
+{
+    cout << "Initialization..." << endl;
+    string s = "";
+    ifstream configfile("config.txt");
+    cout << "reading from config..." << endl;
+    getline(configfile, s);
+    number_of_dots = stoi(s.substr(s.find('=') + 1));
+    getline(configfile, s);
+    root_path = s.substr(s.find('=') + 1);
+    getline(configfile, s);
+    path_to_models = (s.substr(s.find('=') + 1));
+    getline(configfile, s);
+    path_to_data = (s.substr(s.find('=') + 1));
+    getline(configfile, s);
+    path_to_databases = (s.substr(s.find('=') + 1));
+    getline(configfile, s);
+    number_of_tested = stoi(s.substr(s.find('=') + 1));
+    cout << "----- starting with these parameters -----" << endl;
+    cout << "number_of_dots = " << number_of_dots << endl;
+    cout << "root_path = " << root_path << endl;
+    cout << "path_to_models = " << path_to_models << endl;
+    cout << "path_to_data = " << path_to_data << endl;
+    cout << "path_to_databases = " << path_to_databases << endl;
+    cout << "number_of_tested = " << number_of_tested << endl;
+    cout << "------------------------------------------" << endl;
 }
 
-
-void waitForCommands()
+int main(int argc, char** argv)
 {
-    std::string command = "";
-    std::cin >> command;
-    if (cmdMap.find(command) != cmdMap.end())
+    Initialize();
+    for (int i = 1; i < argc; i++)
     {
-        switch (cmdMap.at(command)) {
-        case HELP: cmdHelp(); break;
-        case CREATE: create(); break;
-        case OPEN: open(); break;
-        case OPENED: opened(); break;
-        case CLOSE: close(); break;
-        case START: start(); break;
-        case SHOW: show(); break;
-        case BEST: best(); break;
-        }
-    }
-    else {
-        std::cout << "command not found. try -help for list" << std::endl;
-    }
-}
-
-void cmdHelp()
-{
-    std::cout <<
-        "---list of commands---" << std::endl <<
-        "-create" << std::endl <<
-        "-open" << std::endl <<
-        "-close" << std::endl <<
-        "-start" << std::endl <<
-        "-show" << std::endl <<
-        "-opened_list" << std::endl <<
-        "-best" << std::endl;
-}
-
-void open()
-{
-    std::cout << "print name of net: ";
-    std::string net_name = "";
-    std::cin >> net_name;
-
-    bool fine = false;
-
-    try {
-        std::ifstream ifs(net_name.c_str(), std::ios::binary | std::ios::in);
-        if (ifs.fail() || ifs.bad()) throw tiny_dnn::nn_error("failed to open:" + net_name);
-        fine = true;
-    }
-    catch (tiny_dnn::nn_error exc) {
-        std::cout << "failed to load nn with name " << net_name << std::endl;
-    }
-
-    if (!fine) return;
-
-    std::cout << "opened " << net_name << " successfully" << std::endl;
-    nns.insert(net_name);
-}
-
-void opened()
-{
-    std::cout << "list of opened nns" << std::endl;
-    for (std::set<std::string>::iterator it = nns.begin(); it != nns.end(); it++)
-    {
-        std::cout << (*it) << std::endl;
-    }
-    if (nns.begin() == nns.end()) std::cout << "List is empty! Nothing is opened!" << std::endl;
-}
-
-void create() {
-    std::cout << "print name of new net: ";
-    std::string net_name = "";
-    std::cin >> net_name;
-
-    bool fine = false;
-
-    try {
-        std::ifstream ifs(net_name.c_str(), std::ios::binary | std::ios::in);
-        if (ifs.fail() || ifs.bad()) throw tiny_dnn::nn_error("failed to open:" + net_name);
-        fine = true;
-    }
-    catch (tiny_dnn::nn_error exc) {
-
-        tiny_dnn::network<tiny_dnn::sequential> nn;
-        construct_net(nn, backend_type);
-        nn.save(net_name);
-        std::ofstream((net_name + "_t.txt").c_str());
-        std::cout << "net with name " + net_name + " created successfully!" << std::endl;
-
-    }
-    if (fine)
-    {
-        std::cout << "net with name " + net_name + " already exists" << std::endl << "create new instead of already existing? (y/n)" << std::endl;
-        std::string ans = "";
-        std::cin >> ans;
-        if (ans == "y" || ans == "Y")
+        string command = "";
+        command = argv[i];
+        if (cmdMap.find(command) != cmdMap.end())
         {
-            tiny_dnn::network<tiny_dnn::sequential> nn;
-            nn.save(net_name);
-            std::cout << net_name + " has been overwritten" << std::endl; 
-
-            std::ofstream ofs;
-            ofs.open((net_name + "_t.txt").c_str(), std::ofstream::out | std::ofstream::trunc);
-            ofs.close();
-        }
-        else {
-            std::cout << "nothing changed" << std::endl;
+            cout << "--------------------" << endl;
+            switch (cmdMap.at(command))
+            {
+            case START: cout << "invoking 'start' command" << endl; start(argc, i, argv); break;
+            case BEST: cout << "invoking 'best' command" << endl; best(argc, i, argv); break;
+            }
         }
     }
-
 }
 
-void close() {
-    std::cout << "print name of new to close: ";
-    std::string net_name = "";
-    std::cin >> net_name;
-    if (nns.find(net_name) != nns.end()) nns.erase(net_name);
-    else std::cout << "there's no opened net with that name" << std::endl;
-}
-
-void start()
+void start(int argc, int i, char** argv)
 {
+    set<string> nns;
+    i++;
+    string cur = "";
+    while (!(cur[0] == '-' && cur[1] == '-') && i < argc)
+    {
+        cur = argv[i];
+        try {
+            std::ifstream ifs((root_path + path_to_models + cur).c_str(), std::ios::binary | std::ios::in);
+            if ((ifs.fail() || ifs.bad()) && cur != "all") throw (nn_error("err"));
+            if (cur != "all") nns.insert(cur);
+            if (cur == "all") cout << "going to use all models from root_directory/models_directory" << endl;
+        }
+        catch (nn_error qwe) {
+            cout << "net with name " << cur << " is not found" << endl;
+        }
+        i++;
+        if (i < argc) cur = argv[i];
+    }
+    if (cur == "all")
+    {
+        for (auto& p : fs::directory_iterator(root_path + path_to_models))
+        {
+           // cout << p << endl;
+            stringstream tmpstr(ios::in | ios::out);
+            tmpstr << p;
+            string namecur;
+            while (!stream_is_empty(tmpstr))
+            {
+                string s;
+                tmpstr >> s;
+                namecur += s;
+            }
+            namecur = find_file_name(namecur);
+            nns.insert(namecur);
+        }
+
+    }
+
+    if (nns.begin() != nns.end() && test_images.size() == 0) fill_massives();
+
+
     try {
         std::cout << "start testing" << std::endl;
         if (nns.begin() == nns.end()) std::cout << "no nets are opened" << std::endl;
@@ -340,20 +302,14 @@ void start()
         {
             std::cout << "currently testing " + (*curnet) << std::endl;
 
-            std::ofstream ofs(((*curnet) + "_t.txt").c_str());
-
-            for (int i = 0; i < number_of_iterations; i++)
+            std::ofstream ofs((path_to_data + (*curnet) + ".csv").c_str());
+            ofs << "accuracy\t" << "precision\t" << "recall\t" << "f1" << endl;
+            for (int i = 0; i < number_of_dots; i++)
             {
 
-                std::vector<tiny_dnn::label_t> test_labels_r, train_labels_r;
-                std::vector<tiny_dnn::vec_t> test_images_r, train_images_r;
-                for (int cur = 0; cur < number_of_randoms_train; cur++)
-                {
-                    int randcur = rand() % train_images.size();
-                    train_labels_r.push_back(train_labels[randcur]);
-                    train_images_r.push_back(train_images[randcur]);
-                }
-                for (int cur = 0; cur < number_of_randoms_tests; cur++)
+                std::vector<tiny_dnn::label_t> test_labels_r;
+                std::vector<tiny_dnn::vec_t> test_images_r;
+                for (int cur = 0; cur < number_of_tested; cur++)
                 {
                     int randcur = rand() % test_images.size();
                     test_labels_r.push_back(test_labels[randcur]);
@@ -362,7 +318,7 @@ void start()
 
 
                 try {
-                    train_net(learning_rate, epochs, minibatch_size, backend_type, train_labels_r, train_images_r, test_labels_r, test_images_r, (*curnet), ofs);
+                    testing(backend_type, test_labels_r, test_images_r, (*curnet), ofs);
                 }
                 catch (tiny_dnn::nn_error &err) {
                     std::cerr << "Exception: " << err.what() << std::endl;
@@ -380,36 +336,28 @@ void start()
     }
 }
 
-void best()
-{
 
-}
-
-void show()
+void best(int argc, int i, char** argv)
 {
-    for (auto it = nns.begin(); it != nns.end(); it++)
+    int mode = 0;
+    set<string> names;
+    for (auto& p: fs::directory_iterator(root_path + path_to_data))
     {
-
+        cout << p << endl;
+        stringstream tmpstr(ios::in | ios::out);
+        tmpstr << p;
+        string namecur;
+        tmpstr >> namecur;
+        names.insert(namecur);
     }
-}
 
-void Initialize()
-{
-    std::cout << "Initialization started" << std::endl;
-
-    std::cout << "Loading train labels" << std::endl;
-    tiny_dnn::parse_mnist_labels(data_path + "/train-labels.idx1-ubyte",
-        &train_labels);
-    std::cout << "Loading train images" << std::endl;
-    tiny_dnn::parse_mnist_images(data_path + "/train-images.idx3-ubyte",
-        &train_images, -1.0, 1.0, 2, 2);
-    std::cout << "Loading test labels" << std::endl;
-    tiny_dnn::parse_mnist_labels(data_path + "/t10k-labels.idx1-ubyte",
-        &test_labels);
-    std::cout << "Loading test images" << std::endl;
-    tiny_dnn::parse_mnist_images(data_path + "/t10k-images.idx3-ubyte",
-        &test_images, -1.0, 1.0, 2, 2);
-
-    std::cout << "Initialization ended. Enjoy!" << std::endl;
-
+    tiny_dnn::network<tiny_dnn::sequential> nn;
+    construct_net(nn, backend_type);
+    vector < pair<string, double>> places;
+    if (test_images.size() == 0) fill_massives();
+    for (auto i = names.begin(); i != names.end(); i++)
+    {
+        nn.load(*i);
+        result res = nn.test(test_images, test_labels);
+    }
 }
