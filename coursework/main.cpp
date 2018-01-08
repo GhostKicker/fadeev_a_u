@@ -14,9 +14,14 @@ namespace fs = std::experimental::filesystem;
 #include "tiny_dnn/tiny_dnn.h"
 
 typedef std::map<tiny_dnn::label_t, std::map<tiny_dnn::label_t, int>> conf_m;
+typedef std::tuple<std::string, double, double, double, double> nn_datas;
+
 
 using namespace std;
 using namespace tiny_dnn;
+
+const string sep = ";";
+
 
 int number_of_dots                                                   = 0;
 string root_path                                                     = "";
@@ -54,14 +59,19 @@ bool stream_is_empty(std::stringstream& pFile)
     return pFile.peek() == std::ifstream::traits_type::eof();
 }
 
+bool istream_is_empty(std::istream& pFile)
+{
+    return pFile.peek() == std::istream::traits_type::eof();
+}
+
 double Precision_i(const conf_m& m, int i)
 {
     int num = 0;
     if (m.find(i) != m.end() && m.at(i).find(i) != m.at(i).end()) num = m.at(i).at(i);
     int denum = 0;
-    for (int j = 0; j < 9; j++)
+    for (int j = 0; j <= 9; j++)
     {
-        if (m.find(i) != m.end() && m.at(i).find(j) != m.at(i).end() && i != j) denum += m.at(i).at(j);
+        if (m.find(i) != m.end() && m.at(i).find(j) != m.at(i).end()) denum += m.at(i).at(j);
     }
     if (denum > 0) return (double)(num) / denum; else return 0;
 }
@@ -71,32 +81,44 @@ double Recall_i(const conf_m& m, int i)
     int num = 0;
     if (m.find(i) != m.end() && m.at(i).find(i) != m.at(i).end()) num = m.at(i).at(i);
     int denum = 0;
-    for (int j = 0; j < 9; j++)
+    for (int j = 0; j <= 9; j++)
     {
-        if (m.find(j) != m.end() && m.at(j).find(i) != m.at(j).end() && i != j)   denum += m.at(j).at(i);
+        if (m.find(j) != m.end() && m.at(j).find(i) != m.at(j).end())   denum += m.at(j).at(i);
     }
     if (denum > 0) return (double)(num) / denum; else return 0;
 }
 
 double Precision(const conf_m& m)
 {
+    int denumm = 10;
     double totalPrecition = 0;
-    for (int i = 0; i < 9; i++) totalPrecition += Precision_i(m, i);
-    return totalPrecition / 10;
+    for (int i = 0; i <= 9; i++)
+    {
+        double val = Precision_i(m, i);
+        if (val == 0) denumm -= 1;
+        totalPrecition += val;
+    }
+    return totalPrecition / denumm;
 }
 
 double Recall(const conf_m& m)
 {
+    int denumm = 10;
     double totalRecall = 0;
-    for (int i = 0; i < 9; i++) totalRecall += Recall_i(m, i);
-    
-    return totalRecall / 10;
+    for (int i = 0; i <= 9; i++)
+    {
+        double val = Recall_i(m, i);
+        if (val == 0) denumm -= 1;
+        totalRecall += val;
+    }
+    return totalRecall / denumm;
 }
 
 double F1_i(const conf_m& m, int i)
 {
     return 2 * (Precision_i(m, i)*Recall_i(m, i)) / (Precision_i(m, i) + Recall_i(m, i));
 }
+
 double F1(const conf_m& m)
 {
     return 2 * (Precision(m)*Recall(m)) / (Precision(m) + Recall(m));
@@ -118,16 +140,13 @@ void fill_massives()
 }
 
 
-static void testing(
+static std::tuple<double, double, double, double> testing(
+    tiny_dnn::network<tiny_dnn::sequential>& nn,
     tiny_dnn::core::backend_t backend_type,
     std::vector<tiny_dnn::label_t>& test_labels,
     std::vector<tiny_dnn::vec_t>& test_images,
     std::string net_name,
     std::ofstream& ofstr) {
-    tiny_dnn::network<tiny_dnn::sequential> nn;
-
-    construct_net(nn, backend_type);
-    nn.load(path_to_models + net_name);
 
 
     tiny_dnn::result res = nn.test(test_images, test_labels);
@@ -135,8 +154,11 @@ static void testing(
     double prec = Precision(res.confusion_matrix);
     double rec = Recall(res.confusion_matrix);
     double f1 = F1(res.confusion_matrix);
-    ofstr << (double)res.num_success / res.num_total << "\t" << prec << "\t" << rec << "\t" << f1 << endl;
+    double acc = (double)res.num_success / res.num_total;
+    std::vector<std::vector<double>> dec_values;
+    ofstr << 1000 * (double)res.num_success / res.num_total << sep << 1000 * prec << sep << 1000 * rec << sep << 1000 * f1 << endl;
     std::cout << res.num_success << "/" << res.num_total << "     " << prec << "       " << rec << "       " << f1 << std::endl;
+    return std::make_tuple(acc, prec, rec, f1);
 }
 
 
@@ -298,12 +320,23 @@ void start(int argc, int i, char** argv)
     try {
         std::cout << "start testing" << std::endl;
         if (nns.begin() == nns.end()) std::cout << "no nets are opened" << std::endl;
+        std::ofstream general_i;
+        general_i << "name" + sep + "accuracy" + sep + "precision" + sep + "recall" + sep + "f1" << endl;
+        if (nns.begin() != nns.end()) general_i = std::ofstream((root_path + path_to_data + "general_info.csv").c_str());
         for (std::set<std::string>::iterator curnet = nns.begin(); curnet != nns.end(); curnet++)
         {
+            tiny_dnn::network<tiny_dnn::sequential> cur_nn;
+
+            construct_net(cur_nn, backend_type);
+            cur_nn.load(path_to_models + (*curnet));
             std::cout << "currently testing " + (*curnet) << std::endl;
 
             std::ofstream ofs((path_to_data + (*curnet) + ".csv").c_str());
-            ofs << "accuracy\t" << "precision\t" << "recall\t" << "f1" << endl;
+            ofs << "accuracy;precision;recall;f1" << endl;
+            double macro_av_acc = 0;
+            double macro_av_prec = 0;
+            double macro_av_rec = 0;
+            double macro_av_f1 = 0;
             for (int i = 0; i < number_of_dots; i++)
             {
 
@@ -318,14 +351,30 @@ void start(int argc, int i, char** argv)
 
 
                 try {
-                    testing(backend_type, test_labels_r, test_images_r, (*curnet), ofs);
+                    auto res = testing(cur_nn, backend_type, test_labels_r, test_images_r, (*curnet), ofs);
+                    macro_av_acc += get<0>(res);
+                    macro_av_prec += get<1>(res);
+                    macro_av_rec += get<2>(res);
+                    macro_av_f1 += get<3>(res);
+                    
                 }
                 catch (tiny_dnn::nn_error &err) {
                     std::cerr << "Exception: " << err.what() << std::endl;
                 }
             }
+            macro_av_acc /= number_of_dots;
+            macro_av_prec /= number_of_dots;
+            macro_av_rec /= number_of_dots;
+            macro_av_f1 /= number_of_dots;
+
+            general_i << (*curnet) << sep
+                << macro_av_acc << sep
+                << macro_av_prec << sep
+                << macro_av_rec << sep
+                << macro_av_f1 << endl;
             ofs.close();
         }
+        general_i.close();
         std::cout << "stop testing" << std::endl;
     }
     catch (std::exception& e) {
@@ -339,25 +388,101 @@ void start(int argc, int i, char** argv)
 
 void best(int argc, int i, char** argv)
 {
-    int mode = 0;
-    set<string> names;
-    for (auto& p: fs::directory_iterator(root_path + path_to_data))
+    i++;
+    string cur = "";
+    if (i < argc)
     {
-        cout << p << endl;
-        stringstream tmpstr(ios::in | ios::out);
-        tmpstr << p;
-        string namecur;
-        tmpstr >> namecur;
-        names.insert(namecur);
+        cur = argv[i];
+    }
+    else return;
+
+    ptrdiff_t num = 0;
+
+    try
+    {
+        num = stoi(cur);
+    }
+    catch (std::exception e) {
+        return;
     }
 
-    tiny_dnn::network<tiny_dnn::sequential> nn;
-    construct_net(nn, backend_type);
-    vector < pair<string, double>> places;
-    if (test_images.size() == 0) fill_massives();
-    for (auto i = names.begin(); i != names.end(); i++)
+    vector<nn_datas> nns;
+    string data_cur;
+    ifstream general_i_stream(root_path + path_to_data + "general_info.csv");
+    while (!istream_is_empty(general_i_stream))
     {
-        nn.load(*i);
-        result res = nn.test(test_images, test_labels);
+        getline(general_i_stream, data_cur);
+        string name = data_cur.substr(0, data_cur.find(sep));
+        data_cur = data_cur.substr(data_cur.find(sep) + 1);
+        double acc = stod(data_cur.substr(0, data_cur.find(sep)));
+        data_cur = data_cur.substr(data_cur.find(sep) + 1);
+        double prec = stod(data_cur.substr(0, data_cur.find(sep)));
+        data_cur = data_cur.substr(data_cur.find(sep) + 1);
+        double rec = stod(data_cur.substr(0, data_cur.find(sep)));
+        data_cur = data_cur.substr(data_cur.find(sep) + 1);
+        double f1 = stod(data_cur.substr(0, data_cur.find(sep)));
+
+        nns.push_back(make_tuple(name, acc, prec, rec, f1));
     }
+
+    num = min(static_cast<ptrdiff_t>(nns.size()), num);
+
+    std::ofstream beststr;
+    if (nns.begin() != nns.end()) beststr = std::ofstream((root_path + path_to_data + "best.txt").c_str());
+    cout << "output of best " << num << " models" << endl;
+    cout << "best by accuracy" << endl;
+    beststr << "output of best " << num << " models" << endl;
+    beststr << "best by accuracy" << endl;
+
+    sort(nns.begin(), nns.end(),
+        [](nn_datas& lhs, nn_datas& rhs) -> bool
+    {
+        return get<1>(lhs) > get<1>(rhs);
+    });
+
+    for (ptrdiff_t i = 0; i < num; ++i)
+    {
+        cout << i + 1 << "     " << get<0>(nns[i]) << "    " << get<1>(nns[i]) << endl;
+        beststr << i + 1 << "     " << get<0>(nns[i]) << "    " << get<1>(nns[i]) << endl;
+    }
+
+    cout << "best by precision" << endl;
+    beststr << "best by precision" << endl;
+    sort(nns.begin(), nns.end(),
+        [](nn_datas& lhs, nn_datas& rhs) -> bool
+    {
+        return get<2>(lhs) > get<2>(rhs);
+    });
+    for (ptrdiff_t i = 0; i < num; ++i)
+    {
+        cout << i + 1 << "     " << get<0>(nns[i]) << "    " << get<2>(nns[i]) << endl;
+        beststr << i + 1 << "     " << get<0>(nns[i]) << "    " << get<2>(nns[i]) << endl;
+    }
+
+    cout << "best by recall" << endl;
+    beststr << "best by recall" << endl;
+    sort(nns.begin(), nns.end(),
+        [](nn_datas& lhs, nn_datas& rhs) -> bool
+    {
+        return get<3>(lhs) > get<3>(rhs);
+    });
+    for (ptrdiff_t i = 0; i < num; ++i)
+    {
+        cout << i + 1 << "     " << get<0>(nns[i]) << "    " << get<3>(nns[i]) << endl;
+        beststr << i + 1 << "     " << get<0>(nns[i]) << "    " << get<3>(nns[i]) << endl;
+    }
+
+    cout << "best by f1" << endl;
+    beststr << "best by f1" << endl;
+    sort(nns.begin(), nns.end(),
+        [](nn_datas& lhs, nn_datas& rhs) -> bool
+    {
+        return get<4>(lhs) > get<4>(rhs);
+    });
+    for (ptrdiff_t i = 0; i < num; ++i)
+    {
+        cout << i + 1 << "     " << get<0>(nns[i]) << "    " << get<4>(nns[i]) << endl;
+        beststr << i + 1 << "     " << get<0>(nns[i]) << "    " << get<4>(nns[i]) << endl;
+    }
+    beststr.close();
 }
