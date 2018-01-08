@@ -216,16 +216,19 @@ const enum cmds
 {
     START,
     BEST,
+    WORST
 };
 
 const std::map<std::string, int> cmdMap
 {
     { "--start", START },
     { "--best", BEST },
+    { "--worst", WORST }
 };
 
 void start(int argc, int i, char** argv);
 void best(int argc, int i, char** argv);
+void worst(int argc, int i, char** argv);
 
 void Initialize() 
 {
@@ -269,6 +272,7 @@ int main(int argc, char** argv)
             {
             case START: cout << "invoking 'start' command" << endl; start(argc, i, argv); break;
             case BEST: cout << "invoking 'best' command" << endl; best(argc, i, argv); break;
+            case WORST: cout << "invoking 'worst-tests' command" << endl; worst(argc, i, argv); break;
             }
         }
     }
@@ -485,4 +489,85 @@ void best(int argc, int i, char** argv)
         beststr << i + 1 << "     " << get<0>(nns[i]) << "    " << get<4>(nns[i]) << endl;
     }
     beststr.close();
+}
+
+void worst(int argc, int i, char** argv)
+{
+    i++;
+    string cur = "";
+    if (i < argc)
+    {
+        cur = argv[i];
+    }
+    else return;
+
+    ptrdiff_t num = 0;
+
+    try
+    {
+        num = stoi(cur);
+    }
+    catch (std::exception e) {
+        return;
+    }
+    if (test_labels.size() == 0) fill_massives();
+    set<string> nns;
+    vector<int> right = (vector<int>(test_labels.size(), 0));
+
+    for (auto& p : fs::directory_iterator(root_path + path_to_models))
+    {
+        // cout << p << endl;
+        stringstream tmpstr(ios::in | ios::out);
+        tmpstr << p;
+        string namecur;
+        while (!stream_is_empty(tmpstr))
+        {
+            string s;
+            tmpstr >> s;
+            namecur += s;
+        }
+        namecur = find_file_name(namecur);
+        nns.insert(namecur);
+    }
+    num = min(static_cast<ptrdiff_t>(right.size()), num);
+
+    for (auto curnet = nns.cbegin(); curnet != nns.cend(); curnet++)
+    {
+        tiny_dnn::network<tiny_dnn::sequential> cur_nn;
+        construct_net(cur_nn, backend_type);
+        cur_nn.load(path_to_models + (*curnet));
+
+        cout << "currently testing " << *curnet << endl;
+        const ptrdiff_t mass_size = test_labels.size();
+        for (ptrdiff_t i = 0; i < mass_size; ++i)
+        {
+            auto vec_l = vector<label_t>(1, test_labels[i]);
+            auto vec_i = vector<vec_t>(1, test_images[i]);
+            tiny_dnn::result res = cur_nn.test(vec_i, vec_l);
+            right[i] += res.num_success;
+            if ((i + 1) % 1000 == 0) cout << i + 1 << " tests done!" << endl;
+        }
+    }
+    vector<pair<int, int>> worst;
+
+    for (ptrdiff_t i = 0; i < right.size(); i++)
+    {
+        worst.push_back(make_pair(i + 1, right[i]));
+    }
+
+    sort(worst.begin(), worst.end(), 
+        [](pair<int, int>& a, pair<int, int>& b) 
+    {
+        return a.second < b.second;
+    });
+
+    std::ofstream worststr((root_path + path_to_data + "worst-tests.txt").c_str());
+    int nnsnum = nns.size();
+    cout << "worst tests" << endl;
+    worststr << "worst tests" << endl;
+    for (ptrdiff_t i = 0; i < num; i++)
+    {
+        cout << worst[i].first << " - " << static_cast<double>(worst[i].second) / nnsnum << "%" << endl;
+        worststr << worst[i].first << " - " << static_cast<double>(worst[i].second) / nnsnum << "%" << endl;
+    }
 }
