@@ -37,7 +37,6 @@ coursework/we
 coursework/mynet
 coursework/LeNet-model
 coursework/qq
-*.txt
 coursework/.vs/coursework/v15/.suo
 *.csv
 *.idx3-ubyte
@@ -46,8 +45,10 @@ coursework/x64/Debug/.vs/coursework/v15/.suo
 coursework/models/ggg
 coursework/models/LeNet-model
 coursework/models/model-2
-coursework/models/model-1
 coursework/models/model-3
 coursework/models/model-4
 coursework/models/model-5
 coursework/models/model-6
+coursework/data/worst-tests.txt
+coursework/data/best.txt
+coursework/x64/Debug/config.txt

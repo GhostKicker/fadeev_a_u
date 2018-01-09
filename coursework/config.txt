@@ -1,0 +1,6 @@
+number_of_dots					=100
+root_path						=C://Users/User/Documents/Visual Studio 2017/Projects/fadeev_a_u/coursework/
+path_to_models           		=models/
+path_to_data             		=data/
+path_to_databases				=databases/
+number_of_tested				=40
